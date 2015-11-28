@@ -76,7 +76,7 @@ void print_output_in_archivo(FILE * archivo, uint8_t * output)
         }
         else
             temp[indice++] = output[i];
-	}
+    }
 
     fprintf(archivo, "%*s\n", indice+4,temp);
 }

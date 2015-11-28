@@ -155,7 +155,7 @@ void libera_stack(balanced ** stack)
         temp = *stack;
         *stack = temp->next;
         free(temp);
-	}
+    }
 }
 
 uint8_t check_pair(uint8_t value1, uint8_t value2)
@@ -248,7 +248,7 @@ uint8_t check_balanced(uint8_t * cadena, uint8_t token)
         if(stack != NULL)
             libera_stack(&stack);
         return 0;
-	}	
+    }	
 }
 
 uint8_t * remove_quotes(uint8_t * cadena)
@@ -267,7 +267,7 @@ uint8_t * remove_quotes(uint8_t * cadena)
             break;
         else
             temp[indice++] = cadena[i];
-	}
+    }
 
     uint8_t * char_retorna = (uint8_t *)malloc(strlen(temp)+1);
     strcpy(char_retorna, temp);
