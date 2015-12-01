@@ -287,11 +287,45 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
             datos = check_variable_grammar(*lexer, size);
             if(datos == NULL)
                 return NULL;
-            cadena_retorno = print_origanl_variable(datos, *lexer, len, size);
-            if(cadena_retorno == NULL)
+            else if(datos->declarada == RAW_INPUT)
             {
-                free(datos);
-                return NULL;
+                uint8_t ret = check_raw_input_grammar(*lexer,size,CADENA);
+                if(ret == 0)
+                {
+                    free(datos);
+                    return NULL;
+                }
+                cadena_retorno = print_original_input(*lexer, size, ret);
+                if(cadena_retorno == NULL)
+                {
+                    free(datos);
+                    return NULL;
+                }
+            }
+            /*Si entra aqui, signigifica que la expresion es: variable = int(raw_input()) o variable = float(raw_input())*/
+            else if(datos->declarada == INT || datos->declarada == FLOAT_F)
+            {
+                uint8_t ret = check_raw_input_grammar(*lexer, size,datos->declarada);
+                if(ret == 0)
+                {
+                    free(datos);
+                    return NULL;
+                }
+                cadena_retorno = print_original_input(*lexer, size, ret);
+                if(cadena_retorno == NULL)
+                {
+                    free(datos);
+                    return NULL;
+                }
+            }
+            else
+            {
+                cadena_retorno = print_origanl_variable(datos, *lexer, len, size);
+                if(cadena_retorno == NULL)
+                {
+                    free(datos);
+                    return NULL;
+                }
             }
             free(datos);
             break;
@@ -355,7 +389,7 @@ uint8_t check_keyword(uint8_t * token)
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "int") == 0 || strcmp(token, "uint32_t") == 0 || strcmp(token, "int32_t") == 0)
+	else if(strcmp(token, "uint32_t") == 0 || strcmp(token, "int32_t") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
@@ -370,7 +404,7 @@ uint8_t check_keyword(uint8_t * token)
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "float") == 0 || strcmp(token, "memset") == 0 || strcmp(token, "strlen") == 0)
+	else if(strcmp(token, "memset") == 0 || strcmp(token, "strlen") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
@@ -514,6 +548,14 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
 
     if(strcmp(temp, "print") == 0)
         r_token = PRINT;
+    else if(strcmp(temp, "raw_input") == 0)
+        r_token = RAW_INPUT;
+    else if(strcmp(temp, "int") == 0)
+        r_token = INT;
+    else if(strcmp(temp, "float") == 0)
+        r_token = FLOAT_F;
+    else if(strcmp(temp, "len") == 0)
+        r_token = LEN;    
     else
         r_token = VARIABLE;
 
