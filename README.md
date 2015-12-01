@@ -13,3 +13,7 @@ Solo traduce código Python 2.7
 Para compilar solo ejecuta el makefile que viene dentro de la carpeta source: make compilador
 <br>
 Para ejecutar: ./compilador ejemplo.py
+
+<h3>Bugs</h3>
+Error corregido al momento de concatenar
+Error corregido en definicion de variables
