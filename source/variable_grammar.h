@@ -32,7 +32,9 @@ uint16_t get_len_malloc(lexical * lexer, uint8_t size);
 uint8_t get_number_of_bytes(uint16_t len);
 void checa_y_modifica(uint8_t * cadena);
 uint16_t get_bytes(lexical * lexer, uint8_t size);
+uint16_t get_funciones_extras(lexical * lexer, uint8_t size);
 uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, uint8_t size);
+uint8_t check_int_o_float(lexical * lexer, uint8_t size);
 data * check_variable_grammar(lexical * lexer, uint8_t size);
 
 #endif
