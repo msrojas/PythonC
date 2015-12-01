@@ -16,4 +16,7 @@ Para ejecutar: ./compilador ejemplo.py
 
 <h3>Bugs</h3>
 Error corregido al momento de concatenar
+<br>
 Error corregido en definicion de variables
+<br>
+Buffer overflow corregido
