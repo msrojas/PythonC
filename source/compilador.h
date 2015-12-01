@@ -61,6 +61,7 @@ typedef struct symbol_table_sizes
 #include "symbol_table.h"
 #include "free_lib.h"
 #include "definida_en_comentario.h"
+#include "raw_input_grammar.h"
 
 extern uint32_t linea;
 extern uint8_t fixed_width;
