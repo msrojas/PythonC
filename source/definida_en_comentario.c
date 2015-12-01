@@ -98,7 +98,7 @@ void * var_remove(uint8_t * key)
 
             if(prev != NULL)
                 prev->next = e->next;
-			else
+            else
                 definir->table[h] = e->next;
             free(e);
             e = NULL;
@@ -174,6 +174,38 @@ void var_destroy()
 	free(definir);
 }
 
+void print_raw_input(FILE * archivo)
+{
+    fprintf(archivo, "%*s\n", strlen("char * raw_input(char * input)"), "char * raw_input(char * input)");
+    fprintf(archivo, "{\n");
+    fprintf(archivo, "%*s\n", strlen("char c;")+4,"char c;");
+    fprintf(archivo, "%*s\n", strlen("printf(\"%s\", input);")+4, "printf(\"%s\", input);");
+    fprintf(archivo, "%*s\n", strlen("short size = 100;")+4, "short size = 100;");
+    fprintf(archivo, "%*s\n", strlen("short indice = 0;")+4, "short indice = 0;");
+    fprintf(archivo, "%*s\n", strlen("char * get_input = (char *)malloc(size);")+4, "char * get_input = (char *)malloc(size);");
+    fprintf(archivo, "%*s\n", strlen("if(get_input == NULL)")+4, "if(get_input == NULL)");
+    fprintf(archivo, "%*s\n", strlen("{")+4, "{");
+    fprintf(archivo, "%*s\n", strlen("printf(\"Error: ocurrio un inconveniente en la heap\\n\");")+8, "printf(\"Error: ocurrio un inconveniente en la heap\\n\");");
+    fprintf(archivo, "%*s\n", strlen("exit(1);")+8, "exit(1);");  
+    fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");    
+    fprintf(archivo, "%*s\n", strlen("while((c = getchar()) != EOF && c != \'\n\')")+4, "while((c = getchar()) != EOF && c != \'\\n\')");   
+    fprintf(archivo, "%*s\n", strlen("{")+4, "{");
+    fprintf(archivo, "%*s\n", strlen("if(indice >= size )")+8, "if(indice >= size )");
+    fprintf(archivo, "%*s\n", strlen("{")+8, "{");
+    fprintf(archivo, "%*s\n", strlen("size += 50;")+12, "size += 50;");
+    fprintf(archivo, "%*s\n", strlen("get_input = (char *)realloc(get_input, size);")+12, "get_input = (char *)realloc(get_input, size);");
+    fprintf(archivo, "%*s\n", strlen("if(get_input == NULL)")+12, "if(get_input == NULL)");
+    fprintf(archivo, "%*s\n", strlen("{")+12, "{");
+    fprintf(archivo, "%*s\n", strlen("printf(\"Error: ocurrio un inconveniente en la heap\\n\");")+16, "printf(\"Error: ocurrio un inconveniente en la heap\\n\");");
+    fprintf(archivo, "%*s\n", strlen("exit(1);")+16, "exit(1);");
+    fprintf(archivo, "%*s\n", strlen("}")+12, "}");
+    fprintf(archivo, "%*s\n", strlen("}")+8, "}");
+    fprintf(archivo, "%*s\n", strlen("get_input[indice++] = c;")+8, "get_input[indice++] = c;");
+    fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");
+    fprintf(archivo, "%*s\n", strlen("return get_input;")+4, "return get_input;");
+    fprintf(archivo, "}\n");
+}
+
 uint8_t Es_Operador(uint8_t valor)
 {
 	uint8_t i=0;
@@ -189,6 +221,85 @@ uint8_t Es_Operador(uint8_t valor)
 	}
 
 	return retorno;
+}
+
+uint8_t verificar_raw_input(uint8_t * cadena, FILE * archivo_output)
+{
+    uint16_t len = strlen(cadena);
+    uint8_t temp[len+1];
+    memset(temp, 0, sizeof(temp));
+    uint16_t i = 0;
+    uint8_t chars = 0;
+    uint8_t espacios = 0;
+    uint16_t indice = 0;
+
+    for(i=1;i<len;i++)
+    {
+        if(isspace(cadena[i]))
+        {
+            if(chars == 1 && espacios == 0)
+                espacios++;
+        }
+        else
+        {
+            if(chars == 0)
+                chars++;
+            else if(chars == 1 && espacios == 1)
+            {
+                if(strcmp(temp, "raw_input") == 0)
+                {
+                    debug("\nError: la definicion de #raw_input no debe llevar variables\n", linea);
+                    return 0;
+                }
+                else
+                    return 1;
+            }
+            temp[indice++] = cadena[i];
+        }
+    }
+
+    uint8_t id = 0;
+    if(strcmp(temp, "raw_input") == 0)
+    {
+        id = var_get(temp);
+        if(id != 0)
+        {
+            debug("\nAviso: has repetido la declaracion #raw_input mas de una vez, por lo cual se ha omitido. No causa conflictos, pero se recomienda que se elimine\n", linea);
+        }
+        else
+        {   
+            id = var_put(temp, RAW_INPUT);
+            if(id == 0 || id == 2)
+                return 0;
+            print_raw_input(archivo_output);
+        }    
+    }
+
+    return 1;
+
+}
+
+uint8_t buscar_funciones(FILE * archivo, FILE * archivo_output)
+{
+    uint8_t temp[200];
+    memset(temp, 0, sizeof(temp));
+    uint16_t len = 0;
+
+    while(fgets(temp, sizeof(temp), archivo) != NULL)
+    {
+        len = strlen(temp);
+        if(temp[len-1] == '\n')
+            temp[len-1] = '\0';
+        if(temp[0] == '#')
+        {
+            if(!verificar_raw_input(temp, archivo_output))
+                return 0;
+        }
+
+        memset(temp, 0, sizeof(temp));
+    }
+
+    return 1;
 }
 
 uint8_t comentario_parser(uint8_t * cadena, uint16_t index, uint8_t token_t)
@@ -233,15 +344,15 @@ uint8_t comentario_parser(uint8_t * cadena, uint16_t index, uint8_t token_t)
 	uint8_t token = ht_get(temp);
 	if(token != 0)
 	{
-		if(token == NUMERO && token_t == CHAR)
-			debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes declarla como \"char\"\n",linea,temp);
-		else if((token == CADENA || token == FLOAT) && token_t == CHAR)
-			debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"char\"\n",linea,temp);
-		else if(token == NUMERO && token_t == FLOAT)
-			debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes redefinirla como \"float\"",linea,temp);
-		else if(token == FLOAT && token_t == FLOAT)
-			debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"float\"\n",linea,temp);
-		return 0;
+            if(token == NUMERO && token_t == CHAR)
+                debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes declarla como \"char\"\n",linea,temp);
+            else if((token == CADENA || token == FLOAT) && token_t == CHAR)
+                debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"char\"\n",linea,temp);
+            else if(token == NUMERO && token_t == FLOAT)
+                debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes redefinirla como \"float\"",linea,temp);
+            else if(token == FLOAT && token_t == FLOAT)
+                debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"float\"\n",linea,temp);
+            return 0;
 	}
     else if(token == 0)
     {
