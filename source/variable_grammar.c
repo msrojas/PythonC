@@ -234,6 +234,19 @@ uint16_t get_bytes(lexical * lexer, uint8_t size)
 	return (len +=1);
 }
 
+uint16_t get_funciones_extras(lexical * lexer, uint8_t size)
+{
+    uint8_t i=0;
+    uint16_t len = 0;
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == LEN)
+            len += 3;
+        lexer = lexer->next;      
+    }
+    return len;
+}
+
 uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, uint8_t size)
 {
     uint8_t * cadena_retorno = NULL;
@@ -257,10 +270,11 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             { 
                 bytes = get_bytes(lexer, size);
                 uint8_t len_bytes = get_number_of_bytes(datos->len);
+                uint16_t resto = (len_cadena > datos->len) ? len_cadena - datos->len : datos->len - len_cadena;
                 if(fixed_width == 0)
-                    len_type = strlen("char [];")+len_bytes+1;
+                    len_type = strlen("char [];")+len_bytes+resto+1;
                 else
-                    len_type = strlen("int8_t [];")+len_bytes+1;
+                    len_type = strlen("int8_t [];")+len_bytes+resto+1;
             }
             else if(token == 0 && datos->declarada == 1 && token_comentario == CHAR)
             {
@@ -323,9 +337,9 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
                 {
                     if(!init_free())
                     {
-						free(malloc_string);
-						free(strcpy_string);
-						return NULL;
+                        free(malloc_string);
+                        free(strcpy_string);
+                        return NULL;
                     }
                     free_variables->var_name = NULL;
                     free_root = free_variables;
@@ -333,10 +347,10 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
                 if(token == 0)
                 { 
                     if(!agregar_free_var(temp_cadena))
-					{
-						free(malloc_string);
-						free(strcpy_string);
-						return NULL;
+                    {
+                        free(malloc_string);
+                        free(strcpy_string);
+                        return NULL;
                     }
                     size_free++;
                 }
@@ -367,12 +381,12 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 
             if(token == 0)
             {
-				if(ht_put(temp_cadena, datos->token) == 2)
-				{
-					printf("Errno\n");
-					free(cadena_retorno);
-					return NULL;
-				}
+                if(ht_put(temp_cadena, datos->token) == 2)
+                {
+                    printf("Errno\n");
+                    free(cadena_retorno);
+                    return NULL;
+                }
             }
 
 			//printf("%d : %d\n", strlen(temp), sizeof(temp));
@@ -394,6 +408,7 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             }
             else
                 len_type = strlen(";")+1;
+            uint16_t len_funciones = get_funciones_extras(lexer,size);
             uint8_t temp[len_cadena+len_type];
             memset(temp, 0, sizeof(temp));
 
@@ -412,35 +427,42 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             lexer = lexer->next;
             for(i=0;i<size;i++)
             {
-				strcat(temp, lexer->valor);
-				lexer = lexer->next;
+                if(lexer->token == INT)
+                    strcat(temp, "atoi");
+                else if(lexer->token == LEN)
+                    strcat(temp, "strlen");
+                else if(lexer->token == FLOAT_F	)
+                    strcat(temp, "atof");
+                else
+                    strcat(temp, lexer->valor);
+                lexer = lexer->next;
             }
 
             if(datos->operacion_secundaria == OPE_DE_PARENTESIS)
             {
-				if(!check_balanced(temp, VARIABLE))
-				{
-					debug("\nError en linea %d los parentesis no estan balanceados\n", linea);
-					return NULL;
-				}
+                if(!check_balanced(temp, VARIABLE))
+                {
+                    debug("\nError en linea %d los parentesis no estan balanceados\n", linea);
+                    return NULL;
+                }
             }
 			
             sprintf(temp, "%s;", temp);
             cadena_retorno = (uint8_t *)malloc(strlen(temp)+1);
             if(cadena_retorno == NULL)
             {
-				debug("\nError: ocurrio un inconveniente en la heap\n");
-				return NULL;
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
             }
             strcpy(cadena_retorno, temp);
 
             if(token == 0)
             {
-				if(ht_put(temp_cadena, datos->token) == 2)
-				{
-					free(cadena_retorno);
-					return NULL;
-				}
+                if(ht_put(temp_cadena, datos->token) == 2)
+                {
+                   free(cadena_retorno);
+                   return NULL;
+                }
             }
 
 			//printf("%d : %d\n", strlen(temp), sizeof(temp));
@@ -451,14 +473,15 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             uint8_t token_comentario = var_get(lexer->valor);
             if(token_comentario == 0)
             {
-				debug("\nError en linea %d: la variable \"%s\" tiene operacion con decimales. Debes definir la variable en un comentario como float para poder usarla como tal. Ejemplo\n#float nombre_variable\nAgrega esa linea antes de declarar la variable\n",linea, lexer->valor);
-				return NULL;
+                debug("\nError en linea %d: la variable \"%s\" tiene operacion con decimales. Debes definir la variable en un comentario como float para poder usarla como tal. Ejemplo\n#float nombre_variable\nAgrega esa linea antes de declarar la variable\n",linea, lexer->valor);
+                return NULL;
             }
             if(datos->declarada == 0)
                 len_type = strlen("float ;")+1;
             else
                 len_type = strlen(";")+1;
 
+            uint16_t len_funciones = get_funciones_extras(lexer,size);
             uint8_t temp[len_cadena+len_type];
             memset(temp, 0, sizeof(temp));
 
@@ -471,7 +494,14 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             lexer = lexer->next;
             for(i=0;i<size;i++)
             {
-                strcat(temp, lexer->valor);
+                if(lexer->token == INT)
+                    strcat(temp, "atoi");
+                else if(lexer->token == LEN)
+                    strcat(temp, "strlen");
+                else if(lexer->token == FLOAT_F	)
+                    strcat(temp, "atof");
+                else
+                    strcat(temp, lexer->valor);
                 lexer = lexer->next;
             }
 
@@ -512,6 +542,18 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
     return cadena_retorno;
 }
 
+uint8_t check_int_o_float(lexical * lexer, uint8_t size)
+{
+    if(size == 1 || size == 2)
+        return 0;
+    lexer = lexer->next;
+    lexer = lexer->next;
+    if(lexer->token == RAW_INPUT)
+        return 1;
+    else
+        return 0;
+}
+
 data * check_variable_grammar(lexical * lexer, uint8_t size)
 {
     uint8_t token = ht_get(lexer->valor);
@@ -524,8 +566,8 @@ data * check_variable_grammar(lexical * lexer, uint8_t size)
 
     if(lexer->token != IGUAL)
     {
-		debug("\nError en linea %d: no hay signo igual:  %s\n", linea,lexer->valor);
-		return NULL;
+        debug("\nError en linea %d: no hay signo igual:  %s\n", linea,lexer->valor);
+        return NULL;
     }
 
     lexer = lexer->next;
@@ -533,8 +575,38 @@ data * check_variable_grammar(lexical * lexer, uint8_t size)
 
     if(size == 0)
     {
-		debug("\nError en linea %d: falta valor\n", linea);
-		return NULL;
+        debug("\nError en linea %d: falta valor\n", linea);
+        return NULL;
+    }
+    
+    if(lexer->token == RAW_INPUT)
+    {
+        data * datos = (data *)malloc(sizeof(data));
+        if(datos == NULL)
+        {
+            debug("\nError: ocurrio un inconveniente en la heap\n");
+            return NULL;
+        }
+        datos->declarada = RAW_INPUT;    
+        return datos;
+    }
+    else if(lexer->token == INT || lexer->token == FLOAT_F)
+    {
+        if(check_int_o_float(lexer, size))
+        {
+            data * datos = (data *)malloc(sizeof(data));
+            if(datos == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            if(lexer->token == INT)
+                datos->declarada = INT;
+            else
+                datos->declarada = FLOAT_F;
+            return datos;
+        }
+    	
     }
 
     data * datos = basic_grammar(lexer, size);
@@ -543,7 +615,7 @@ data * check_variable_grammar(lexical * lexer, uint8_t size)
         return NULL;
     else if(token != 0)
     {
-        if((datos->token == NUMERO && token == CADENA) || (datos->token == CADENA && token == NUMERO) || (datos->token == FLOAT && token == CADENA))
+        if((datos->token == NUMERO && token == CADENA) || (datos->token == CADENA && token == NUMERO) || (datos->token == FLOAT && token == CADENA) || (datos->token == CADENA && token == FLOAT))
         {
             debug("\nError en linea %d: la variable \"%s\" ", linea,temp);
             switch(token)
