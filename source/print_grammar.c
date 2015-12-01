@@ -195,14 +195,16 @@ uint8_t check_concatenacion(lexical * lexer, uint8_t size)
 
 short get_len_numbers(lexical * lexer, uint8_t size)
 {
-	uint8_t i = 0;
-	short len = 0;
+    uint8_t i = 0;
+    short len = 0;
 
-	for(i=0;i<size;i++)
-	{
-		len += strlen(lexer->valor); 
-		lexer = lexer->next;
-	}
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == LEN)
+            len += 3;
+        len += strlen(lexer->valor); 
+        lexer = lexer->next;
+    }
 
 	return (len+1);
 }
@@ -308,6 +310,12 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             {
                 if(lexer->token == PLUS_CONCAT && c_concat > 0)
                     strcat(check_temp_balanced, ",");
+                else if(lexer->token == INT)
+                    strcat(check_temp_balanced, "atoi");
+                else if(lexer->token == LEN)
+                    strcat(check_temp_balanced, "strlen");
+                else if(lexer->token == FLOAT_F	)
+                    strcat(temp, "atof");
                 else
                 {
                     if(lexer->token == CADENA && c_concat > 0)
@@ -363,6 +371,12 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             {
                 if(lexer->token == PLUS_CONCAT && c_concat > 0)
                     strcat(check_temp_balanced, ",");
+                else if(lexer->token == INT)
+                    strcat(check_temp_balanced, "atoi");
+                else if(lexer->token == LEN)
+                    strcat(check_temp_balanced, "strlen");
+                else if(lexer->token == FLOAT_F	)
+                    strcat(temp, "atof");
                 else
                 {
                     if(lexer->token == CADENA && c_concat > 0)
