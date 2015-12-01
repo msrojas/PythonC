@@ -26,12 +26,13 @@ data * basic_grammar(lexical * lexer, uint8_t size)
     if(datos == NULL)
     {
         debug("\nError: ocurrio un inconveniente en la heap\n");
-		return NULL;
+        return NULL;
     }
 
     uint8_t i = 0;
     uint8_t last_token = 0;
     uint8_t token = 0;
+    uint8_t temp_token = 0;
     uint8_t cuenta_lparentesis = 0;
     uint8_t temp[150];
     memset(temp, 0, sizeof(0));
@@ -51,10 +52,15 @@ data * basic_grammar(lexical * lexer, uint8_t size)
 
     for(i=0;i<size;i++)
     {
-        if((lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION) && last_token == 0)
+        if((lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION || lexer->token == RAW_INPUT) && last_token == 0)
         {
             debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
             free(datos);
+            return NULL;
+        }
+        else if(lexer->token == RAW_INPUT && last_token != 0)
+        {
+            debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
             return NULL;
         }
         else if(lexer->token == VARIABLE && last_token == 0)
@@ -89,7 +95,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
 
         else if(lexer->token == NUMERO && last_token != 0)
         { 
-            if(last_token == CADENA || last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == PLUS_CONCAT || last_token == FLOAT)
+            if(last_token == CADENA || last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == PLUS_CONCAT || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
             {
                 debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
                 free(datos);
@@ -102,12 +108,18 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     ret_token = NUMERO;
                     ope_de_parentesis = 1;
                 }
-            }    
+            } 
+            else if(temp_token == INT || temp_token == FLOAT_F || temp_token == LEN)
+            {
+                debug("\nError en linea %d: la funcion trabaja solo con cadenas: %s\n", linea, lexer->valor);
+                free(datos);
+                return NULL;
+            }
         }
 
         else if(lexer->token == FLOAT && last_token != 0)
         { 
-            if(last_token == CADENA || last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == PLUS_CONCAT || last_token == FLOAT)
+            if(last_token == CADENA || last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == PLUS_CONCAT || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
             {
                 debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
                 free(datos);
@@ -121,15 +133,78 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     ope_de_parentesis = 1;
                 }
             }
+            else if(temp_token == INT || temp_token == FLOAT_F || temp_token == LEN)
+            {
+                debug("\nError en linea %d: la funcion trabaja solo con cadenas: %s\n", linea, lexer->valor);
+                free(datos);
+                return NULL;
+            }
             else if(operacion == 1)
             {
                 ret_token = FLOAT;
             }
         }
-		
+	
+	else if(lexer->token == INT && (last_token != 0 || last_token == 0))
+        {
+            if(last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
+            {
+                debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
+                free(datos);
+                return NULL;
+            }
+            else if(ret_token == L_PARENTESIS && i == cuenta_lparentesis)
+            {
+                if(ope_de_parentesis == 0)
+                {
+                    ope_de_parentesis = 1;
+                }
+            }
+            if(ret_token != FLOAT)
+                ret_token = NUMERO;
+            temp_token = INT;
+        }	
+        else if(lexer->token == FLOAT_F && (last_token != 0 || last_token == 0))
+        {
+            if(last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
+            {
+                debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
+                free(datos);
+                return NULL;
+            }
+            else if(ret_token == L_PARENTESIS && i == cuenta_lparentesis)
+            {
+                if(ope_de_parentesis == 0)
+                {
+                    ope_de_parentesis = 1;
+                }
+            }
+            ret_token = FLOAT;
+            temp_token = FLOAT_F;
+        }
+        else if(lexer->token == LEN && (last_token != 0 || last_token == 0))
+        {
+            if(last_token == NUMERO || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
+            {
+                debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
+                free(datos);
+                return NULL;
+            }
+            else if(ret_token == L_PARENTESIS && i == cuenta_lparentesis)
+            {
+                if(ope_de_parentesis == 0)
+                {
+                    ope_de_parentesis = 1;
+                }
+            }
+            if(ret_token != FLOAT)
+                ret_token = NUMERO;
+            temp_token = LEN;
+        }
+        
         else if(lexer->token == CADENA && last_token != 0)
         {
-            if(last_token == NUMERO || last_token == L_PARENTESIS || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == FLOAT)
+            if(last_token == NUMERO || (last_token == L_PARENTESIS && (temp_token != INT && temp_token != FLOAT_F && temp_token != LEN)) || last_token == R_PARENTESIS || last_token == VARIABLE || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
             {
                 debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
                 free(datos);
@@ -152,10 +227,12 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                 free(datos);
                 return NULL;
             }
+            else if(last_token == L_PARENTESIS && (temp_token == INT || temp_token == FLOAT_F || temp_token == LEN))
+                temp_token = 0;
         }
         else if(lexer->token == VARIABLE && last_token != 0)
         {
-            if(last_token == CADENA || last_token == NUMERO || last_token == VARIABLE || last_token == R_PARENTESIS || last_token == FLOAT)
+            if(last_token == CADENA || last_token == NUMERO || last_token == VARIABLE || last_token == R_PARENTESIS || last_token == FLOAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
             {
                 debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
                 free(datos);
@@ -170,7 +247,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     free(datos);
                     return NULL;
                 }
-                else if((ret_token == NUMERO && token == CADENA) || (ret_token == CADENA && token == NUMERO) || (ret_token == FLOAT && token == CADENA))
+                else if((ret_token == NUMERO && temp_token == 0 && token == CADENA && last_token != CONCATENACION) || (ret_token == CADENA && last_token != CONCATENACION && (token == NUMERO || token == FLOAT)) || (ret_token == FLOAT && temp_token == 0 && token == CADENA && last_token != CONCATENACION))
                 {
                     debug("\nError en linea %d: la variable \"%s\" es otro tipo de dato\n", linea,lexer->valor);
                     free(datos);
@@ -182,10 +259,18 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     free(datos);					
                     return NULL;
                 }
+                else if((token == NUMERO || token == FLOAT) && (temp_token == INT || temp_token == FLOAT_F || temp_token == LEN))
+                {
+                    debug("\nError en linea %d: la funcion trabaja solo con cadenas: %s\n", linea, lexer->valor);
+                    free(datos);
+                    return NULL;
+                }
                 else if(operacion == 1 && token == FLOAT)
                 {
                     ret_token = FLOAT;
                 }
+                if(last_token == L_PARENTESIS && (temp_token == INT || temp_token == FLOAT_F || temp_token == LEN))
+                    temp_token = 0;
             }
         }
         else if(lexer->token == OPERADOR && last_token != 0)
@@ -286,7 +371,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
         lexer = lexer->next;
     }
 
-    if(last_token == OPERADOR || last_token == CONCATENACION || last_token == L_PARENTESIS || last_token == PLUS_CONCAT)
+    if(last_token == OPERADOR || last_token == CONCATENACION || last_token == L_PARENTESIS || last_token == PLUS_CONCAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
     {
         debug("\nError en linea %d: sintaxis invalida de operador\n",linea);
         free(datos);
