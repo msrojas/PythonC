@@ -116,14 +116,18 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
     return symbol;
 }
 
-void informacion_basica(FILE * archivo)
+uint8_t informacion_basica(FILE * archivo_output, FILE * archivo)
 {
     fprintf(archivo, "#include <stdio.h>\n");
     fprintf(archivo, "#include <stdlib.h>\n");
     fprintf(archivo, "#include <string.h>\n");
     if(fixed_width == 1)
-        fprintf(archivo, "#include <inttypes.h>\n");
-    fprintf(archivo, "\nint main()\n{\n");
+        fprintf(archivo_output, "#include <inttypes.h>\n");
+    if(!buscar_funciones(archivo, archivo_output))
+    	return 0;
+    fprintf(archivo_output, "\nint main()\n{\n");
+
+    return 1;
 }
 
 void modificar_nombre(char * name, uint8_t len_archivo)
@@ -271,8 +275,24 @@ int main(int argc, char *argv[])
     }
 
     ht_create(symbol->symbol_variable);
+    if(symbol->symbol_comentario_var > 0)
+        init_definir(symbol->symbol_comentario_var);
 
-    informacion_basica(archivo_output);
+    fseek(archivo, 0L, SEEK_SET);
+    if(!informacion_basica(archivo_output, archivo))
+    {
+        fclose(archivo);
+        fclose(archivo_output);
+        free(symbol);
+        ht_destroy();
+        if(definir != NULL)
+            var_destroy();
+        if(ret == 1)
+            error_delete_file(argv[2]);
+        else
+            error_delete_file(argv[1]);
+        exit(1);
+    }
 
     short len = 0;
     uint8_t cadena[200];
