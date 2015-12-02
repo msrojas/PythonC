@@ -129,7 +129,7 @@ uint8_t buscar_float(lexical * lexer, uint8_t index, uint8_t size)
             else if(lexer->token == CADENA || lexer->token == CONCATENACION)
                 break;	
         }
-        else if(lexer->token == FLOAT)
+        else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
         {
             ret++;
             break;
@@ -350,7 +350,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint16_t formato_len = 0;
             if(c_concat > 0)
             {
-                //check_float(size, lexer);
+                check_float(size, lexer);
                 string = get_formato(size,lexer, c_concat);	
                 formato_len = strlen(string)+3;
             }
