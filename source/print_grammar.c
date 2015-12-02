@@ -23,9 +23,9 @@
 uint8_t StrCat(lexical * lexer, uint8_t * temp)
 {
     uint8_t token = 0;
-    if(lexer->token == NUMERO)
+    if(lexer->token == NUMERO || lexer->token == INT)
         strcat(temp, "%d");
-    else if(lexer->token == FLOAT)
+    else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
         strcat(temp, "%f");
     else if(lexer->token == CADENA)
         strcat(temp, "%s");
@@ -70,11 +70,11 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
         }
         else if(i == 0 || parentesis == 1)
         {
-            if(lexer->token == NUMERO)
+            if(lexer->token == NUMERO || lexer->token == INT)
                 strcat(temp, "printf(\"%d");
             else if(lexer->token == CADENA)
                 strcat(temp, "printf(\"%s");
-            else if(lexer->token == FLOAT)
+            else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
                 strcat(temp, "printf(\"%f");		
             else if(lexer->token == VARIABLE)
             {
@@ -315,7 +315,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
                 else if(lexer->token == LEN)
                     strcat(check_temp_balanced, "strlen");
                 else if(lexer->token == FLOAT_F	)
-                    strcat(temp, "atof");
+                    strcat(check_temp_balanced, "atof");
                 else
                 {
                     if(lexer->token == CADENA && c_concat > 0)
@@ -350,7 +350,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint16_t formato_len = 0;
             if(c_concat > 0)
             {
-                check_float(size, lexer);
+                //check_float(size, lexer);
                 string = get_formato(size,lexer, c_concat);	
                 formato_len = strlen(string)+3;
             }
@@ -376,7 +376,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
                 else if(lexer->token == LEN)
                     strcat(check_temp_balanced, "strlen");
                 else if(lexer->token == FLOAT_F	)
-                    strcat(temp, "atof");
+                    strcat(check_temp_balanced, "atof");
                 else
                 {
                     if(lexer->token == CADENA && c_concat > 0)
