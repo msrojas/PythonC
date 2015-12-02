@@ -79,9 +79,9 @@ uint8_t * get_string(uint8_t * valor, uint8_t index)
 {
 	uint16_t len = 0;
 	if(index == 0)
-		len = strlen("strlen()+1")+strlen(valor);
+            len = strlen("strlen()+1")+strlen(valor);
 	else
-		len = strlen("+strlen()+1")+strlen(valor);
+            len = strlen("+strlen()+1")+strlen(valor);
 	uint8_t * temp = (uint8_t *)malloc(len+1);
 	if(temp == NULL)
 	{
@@ -89,9 +89,9 @@ uint8_t * get_string(uint8_t * valor, uint8_t index)
 		return NULL;
 	}
 	if(index == 0)
-		sprintf(temp, "strlen(%s)+1", valor);
+            sprintf(temp, "strlen(%s)+1", valor);
 	else
-		sprintf(temp, "+strlen(%s)+1", valor);
+            sprintf(temp, "+strlen(%s)+1", valor);
 	//temp[len+1] = '\0';
 	return temp;
 }
@@ -109,15 +109,15 @@ uint8_t * get_malloc_string(lexical * lexer, uint8_t size)
 
 	size -=2;	
 
-	for(i=0;i<size;i++)
-	{
-		if((lexer->token == CADENA || lexer->token == VARIABLE) && (last_token == PLUS_CONCAT || last_token == 0  || last_token == CADENA))
-		{ 
-			string = get_string(lexer->valor, i);
-			if(string == NULL)
-				return NULL;
-			strcat(temp, string);
-			free(string);
+    for(i=0;i<size;i++)
+    {
+        if((lexer->token == CADENA || lexer->token == VARIABLE) && (last_token == PLUS_CONCAT || last_token == 0  || last_token == CADENA))
+        { 
+            string = get_string(lexer->valor, i);
+            if(string == NULL)
+                return NULL;
+            strcat(temp, string);
+            free(string);
             string = NULL;
         }
         last_token = lexer->token;
