@@ -80,7 +80,7 @@ void print_output_in_archivo(FILE * archivo, output_code * codigo)
 
     for(i=0;i<len;i++)
     {
-        if(output[i] == '\n')
+        if(codigo->cadena_retorno[i] == '\n')
         {
             if(temp[0] == '}' && codigo->temp_indentacion > 0)
             {
