@@ -1,3 +1,7 @@
+#Si deseas que una variable con cadena de caracteres
+#sea tratada como un "char array", debereas declarar esta
+#antes en un comentario
+
 #char cadena
 print "hola"
 print 23
@@ -34,6 +38,9 @@ print prueba
 #char variable
 variable = "esto es una prueba"
 numero = 8782
+
+#Si deseas usar numeros decimales en una variable
+#deberas declararla antes en un comentario
 
 #float decimal
 decimal = 1442.23
