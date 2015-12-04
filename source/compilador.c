@@ -31,6 +31,33 @@ void debug(const char * format, ...)
     va_end(args);
 }
 
+output_code * init_codigo(uint8_t * output, uint16_t espacios, uint8_t temp_indentacion)
+{
+    output_code * codigo = (output_code *)malloc(sizeof(output_code));
+    if(codigo == NULL)
+    {
+        debug("\nError: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+    codigo->cadena_retorno = (uint8_t *)malloc(strlen(output)+1);
+    if(codigo->cadena_retorno == NULL)
+    {
+        debug("\nError: ocurrio un inconveniente en la heap\n");
+        free(codigo);
+        return NULL;
+    }
+    strcpy(codigo->cadena_retorno, output);
+    if(espacios == 0)
+        codigo->indentaciones = 4;
+    else
+        codigo->indentaciones = espacios+4;
+
+    codigo->temp_indentacion = temp_indentacion;
+
+    return codigo;
+}
+
+
 void liberacion_general()
 {
     ht_destroy();
@@ -341,6 +368,16 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
             }
             free(datos);
             break;
+        case IF:
+            if(!check_if_grammar(*lexer, size))
+                return NULL;
+            cadena_retorno = print_original_if(*lexer, size);
+            break;
+        case ELSE:
+            cadena_retorno = print_original_else(*lexer, size);
+            if(cadena_retorno == NULL)
+                return NULL;
+            break;     
         default:
             debug("\nError en linea %d: se desconoce le tipo: %s\n", linea,(*lexer)->valor);
             return NULL;
@@ -348,6 +385,14 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
 
     datos = NULL;
     return cadena_retorno;
+}
+
+uint8_t es_angle_bracket(uint8_t valor)
+{
+    if(valor == '<' || valor == '>')
+        return 1;
+    else
+        return 0;
 }
 
 uint8_t es_parentesis(uint8_t valor)
@@ -409,7 +454,7 @@ uint8_t check_keyword(uint8_t * token)
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "if") == 0 || strcmp(token, "else") == 0 || strcmp(token, "do") == 0)
+	else if(strcmp(token, "do") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
@@ -476,7 +521,7 @@ uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i)
 
     while(1)
     {
-        if(i == len || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',')
+        if(i == len || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == ':' || token[i] == '!')
         {
             i--;
             break;
@@ -491,7 +536,7 @@ uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i)
                 return 0;
             }
         }
-        else if(!isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && token[i] != ',' && token[i] != '.')
+        else if(!isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != ',' && token[i] != '.' && token[i] != ':' && token[i] != '!')
         {
             if(isspace(token[i]))
                 break;
@@ -525,12 +570,12 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
 
     while(1)
     {
-        if(len == i || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',')
+        if(len == i || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == ':' || token[i] == '!')
         {
             i--;
             break;
         }
-        else if(!isalpha(token[i]) && !isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && token[i] != '_' && token[i] != ',')
+        else if(!isalpha(token[i]) && !isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != '_' && token[i] != ',' && token[i] != ':' && token[i] != '!')
         {
             if(isspace(token[i]))
                 break;
@@ -555,7 +600,11 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
     else if(strcmp(temp, "float") == 0)
         r_token = FLOAT_F;
     else if(strcmp(temp, "len") == 0)
-        r_token = LEN;    
+        r_token = LEN;
+    else if(strcmp(temp, "if") == 0)
+        r_token = IF;
+    else if(strcmp(temp, "else") == 0)
+        r_token = ELSE;    
     else
         r_token = VARIABLE;
 
@@ -563,6 +612,19 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
         return 0;
 
     return i;
+}
+
+uint8_t check_indentacion(uint16_t espacios)
+{
+    uint8_t i=0;
+    for(i=1;i<=indentacion;i++)
+    {
+        if(i*4 == espacios)
+            return 1;
+    }
+
+    debug("\nError en linea %d: indentacion invalida\n", linea);
+    return 0;
 }
 
 int len_sin_espacios(uint8_t * cadena)
@@ -579,12 +641,36 @@ int len_sin_espacios(uint8_t * cadena)
     return i;
 }
 
-uint8_t * parser(uint8_t * cadena)
+uint8_t get_index_indent(uint16_t espacios)
+{
+    uint8_t i=0;
+    for(i=1;i<=indentacion;i++)
+    {
+        if(i*4 == espacios && espacios < indentacion*4)
+            return i;
+    }
+
+    return 0;
+}
+
+uint8_t get_formato_indent(uint8_t indent)
+{
+    uint8_t i=0;
+    uint8_t len;
+
+    for(i=0;i<indent;i++)
+        len += strlen("}\n");
+    return len;
+}
+
+output_code * parser(uint8_t * cadena)
 {
     uint8_t i = 0;
     int len = strlen(cadena);
     uint8_t temp[10];
     uint8_t operador = 0;
+    uint16_t espacios = 0;
+    uint8_t chars = 0;
     uint8_t size = 0;
 
     memset(temp, 0, sizeof(temp));
@@ -601,14 +687,28 @@ uint8_t * parser(uint8_t * cadena)
 
     while(1)
     {
-        if(isspace(cadena[i]))
+        if(cadena[i] == ' ')
         {
-			/*Por el momento nada. Pero se tiene planeado usar
-			para verificar indentaciones
-			*/
+            if(chars == 0)
+                espacios++;
         }
-		else
-		{
+        else if(cadena[i] == '\t')
+        {
+            if(chars == 0)
+                espacios += 4;
+        }
+        else
+        {
+            if(chars == 0 && espacios > 0)
+            {
+                if(!check_indentacion(espacios))
+                {
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
+                }
+            }	
             if(isalpha(cadena[i]))
                 i = get_token_funcion_o_var(cadena, &lexer, i);
             else if(isdigit(cadena[i]))
@@ -676,6 +776,43 @@ uint8_t * parser(uint8_t * cadena)
                     return NULL;
                 }
             }
+            else if(es_angle_bracket(cadena[i]))
+            {
+                temp[0] = cadena[i];
+                uint8_t bracket = (cadena[i] == '<') ? MENOR_QUE : MAYOR_QUE;
+                if(!agregar_token(&lexer, temp, bracket))
+                {
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
+                }
+                memset(temp, 0, sizeof(temp));
+            }
+            else if(cadena[i] == ':')
+            {
+                temp[0] = cadena[i];
+                if(!agregar_token(&lexer, temp, DOS_PUNTOS))
+                {
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
+                }
+                memset(temp, 0, sizeof(temp));
+            }
+            else if(cadena[i] == '!')
+            {
+                temp[0] = cadena[i];
+                if(!agregar_token(&lexer, temp, DISTINTO))
+                {
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
+                }
+                memset(temp, 0, sizeof(temp));
+            }
             else if(cadena[i] == '\"' || cadena[i] == '\'')
                 i = check_quotes(cadena,&lexer, i);
             else
@@ -717,12 +854,82 @@ uint8_t * parser(uint8_t * cadena)
     uint8_t * cadena_retorno = semantic_analyzer(&lexer, len, size);
     if(cadena_retorno == NULL)
     {
-		libera_tokens(&lexer, size);
-		liberacion_general();
-		return 0;
+        libera_tokens(&lexer, size);
+	liberacion_general();
+	return 0;
+    }
+	
+    uint8_t * temp_retorno = NULL;
+    uint8_t temp_indentacion = 0;
+    if(espacios == 0 && indentacion > 0)
+    {
+        uint8_t formato = get_formato_indent(indentacion);
+        temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
+        if(temp_retorno == NULL)
+        {
+            debug("\nError: ocurrio un inconveniente en la heap\n");
+            return NULL;
+        }
+        for(i=0;i<indentacion;i++)
+        {
+            if(i==0)
+                sprintf(temp_retorno, "}\n");
+            else
+                sprintf(temp_retorno, "%s}\n", temp_retorno);
+        }
+        strcat(temp_retorno, cadena_retorno);
+        temp_indentacion = indentacion;
+        indentacion = 0;
+    }
+    else if(espacios > 0 && indentacion > 0)
+    {
+        uint8_t index_indent = get_index_indent(espacios);
+        if(index_indent > 0)
+        {
+            uint8_t formato = get_formato_indent(index_indent);
+            temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
+            if(temp_retorno == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            for(i=index_indent;i<indentacion;i++)
+            {
+                if(i==index_indent)
+                    sprintf(temp_retorno, "}\n");
+                else
+                    sprintf(temp_retorno, "%s}\n", temp_retorno);
+            }
+            strcat(temp_retorno, cadena_retorno);
+            uint8_t diferencia = indentacion - index_indent;
+            temp_indentacion = diferencia + index_indent;
+            index_indent = indentacion - index_indent;
+            indentacion -= index_indent;
+        }
+    }
+    
+    output_code * codigo = NULL;
+
+    if(temp_retorno == NULL)
+        codigo = init_codigo(cadena_retorno, espacios, temp_indentacion);
+    else
+        codigo = init_codigo(temp_retorno, espacios, temp_indentacion);
+    if(codigo == NULL)
+    {
+        libera_tokens(&lexer, size);
+        liberacion_general();
+        return 0;
+    }
+
+    if(lexer->token == IF || lexer->token == ELSE)
+    {
+        indentacion++;
     }
 	
     libera_tokens(&lexer, size);
+    free(cadena_retorno);
+    if(temp_retorno != NULL)
+        free(temp_retorno); 
 
-    return cadena_retorno;
+    return codigo;
 }
