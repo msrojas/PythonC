@@ -72,7 +72,7 @@ void agregar_info_final(FILE * archivo)
 
 void print_output_in_archivo(FILE * archivo, output_code * codigo)
 {
-    uint16_t len = strlen(output);
+    uint16_t len = strlen(codigo->cadena_retorno);
     uint16_t i=0;
     uint8_t indice = 0; 
     uint8_t temp[len+1];
@@ -125,7 +125,7 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
         linea_l++;
 
     comentario *= sizeof(var_elemento *);
-    linea_l++ *= sizeof(hash_elem_t*);
+    linea_l *= sizeof(hash_elem_t*);
 
     symbol_table_sizes * symbol = (symbol_table_sizes *)malloc(sizeof(symbol_table_sizes));
     if(symbol == NULL)
@@ -134,7 +134,7 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
         return NULL;
     }
 
-    symbol->symbol_variable = linea_l++;
+    symbol->symbol_variable = linea_l;
     symbol->symbol_comentario_var = comentario;
     return symbol;
 }
