@@ -29,6 +29,7 @@ uint32_t size_free = 0;
 uint32_t linea = 1;
 uint8_t fixed_width = 0;
 var_definidas * definir = NULL;
+uint8_t indentacion = 0;
 
 void error_delete_file(uint8_t * name)
 {
@@ -47,6 +48,17 @@ void error_delete_file(uint8_t * name)
 
 void agregar_info_final(FILE * archivo)
 {
+    if(indentacion > 0)
+    {
+        uint8_t i=0;
+        uint8_t temp_indentacion = indentacion;
+        for(i=0;i<indentacion;i++)
+        {
+            fprintf(archivo, "%*s\n", 4*temp_indentacion+1, "}");
+            temp_indentacion--;
+        }
+    }
+	
     if(free_variables != NULL)
     {   
         acomodar_free_vars();
@@ -58,7 +70,7 @@ void agregar_info_final(FILE * archivo)
     fprintf(archivo, "}");
 }
 
-void print_output_in_archivo(FILE * archivo, uint8_t * output)
+void print_output_in_archivo(FILE * archivo, output_code * codigo)
 {
     uint16_t len = strlen(output);
     uint16_t i=0;
@@ -70,21 +82,29 @@ void print_output_in_archivo(FILE * archivo, uint8_t * output)
     {
         if(output[i] == '\n')
         {
-            fprintf(archivo, "%*s\n", indice+4,temp);
-            memset(temp, 0, sizeof(temp));
+            if(temp[0] == '}' && codigo->temp_indentacion > 0)
+            {
+                fprintf(archivo, "%*s\n", codigo->temp_indentacion*4+1, "}");
+                codigo->temp_indentacion--;
+            }
+            else 
+            {
+                fprintf(archivo, "%*s\n", indice+codigo->indentaciones,temp);
+            }
             indice = 0;
+            memset(temp, 0, sizeof(temp));
         }
         else
-            temp[indice++] = output[i];
+            temp[indice++] = codigo->cadena_retorno[i];
     }
 
-    fprintf(archivo, "%*s\n", indice+4,temp);
+    fprintf(archivo, "%*s\n", indice+codigo->indentaciones,temp);
 }
 
 symbol_table_sizes * get_size_file(FILE * archivo_output)
 {
     uint32_t c = 0;
-    uint16_t linea = 0;
+    uint16_t linea_l = 0;
     uint16_t comentario = 0;
     uint16_t indice = 0;
 
@@ -94,15 +114,18 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
             comentario++;
         else if(c == '\n')
         {
-            linea++;
+            linea_l++;
             indice = 0;
         }
         else 
             indice++;
     }
+    
+    if(indice > 0 && linea_l == 0)
+        linea_l++;
 
     comentario *= sizeof(var_elemento *);
-    linea *= sizeof(hash_elem_t*);
+    linea_l++ *= sizeof(hash_elem_t*);
 
     symbol_table_sizes * symbol = (symbol_table_sizes *)malloc(sizeof(symbol_table_sizes));
     if(symbol == NULL)
@@ -111,7 +134,7 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
         return NULL;
     }
 
-    symbol->symbol_variable = linea;
+    symbol->symbol_variable = linea_l++;
     symbol->symbol_comentario_var = comentario;
     return symbol;
 }
@@ -296,8 +319,7 @@ int main(int argc, char *argv[])
 
     short len = 0;
     uint8_t cadena[200];
-    uint8_t * cadena_output = NULL;
-    uint8_t indentacion = 0;
+    output_code * codigo = NULL;
     memset(cadena, 0, sizeof(cadena));
 
     fseek(archivo, 0L, SEEK_SET);
@@ -325,15 +347,15 @@ int main(int argc, char *argv[])
             linea++;
             continue;
         }
-        else if(strcmp(cadena, "\n") == 0)
+        else if(strcmp(cadena, "\n") == 0 || (cadena[0] == '\t' && len == 1))
         {
             fprintf(archivo_output, "\n");
             memset(cadena, 0, sizeof(cadena));
             linea++;
             continue;
         }
-        cadena_output = parser(cadena);
-        if(cadena_output == NULL)
+        codigo = parser(cadena);
+        if(codigo == NULL)
         {
             fclose(archivo_output);
             fclose(archivo);
@@ -344,16 +366,17 @@ int main(int argc, char *argv[])
                 error_delete_file(argv[1]);
             exit(1);
         }
-        print_output_in_archivo(archivo_output, cadena_output);
-        free(cadena_output);
-        cadena_output = NULL;
+        print_output_in_archivo(archivo_output, codigo);
+        free(codigo);
+        codigo = NULL;
         memset(cadena, 0, sizeof(cadena));
         linea++;
     }
 
     printf("[+] Agregando datos finales\n");
     agregar_info_final(archivo_output);
-    ht_destroy();
+    if(hash != NULL)
+        ht_destroy();
     if(definir != NULL)
         var_destroy();
     free(symbol);
