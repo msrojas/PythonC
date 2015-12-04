@@ -202,6 +202,8 @@ short get_len_numbers(lexical * lexer, uint8_t size)
     {
         if(lexer->token == LEN)
             len += 3;
+        else if(lexer->token == INT || lexer->token == FLOAT_F)
+            len += 1;    
         len += strlen(lexer->valor); 
         lexer = lexer->next;
     }
