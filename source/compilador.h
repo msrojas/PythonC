@@ -55,6 +55,14 @@ typedef struct symbol_table_sizes
 	uint32_t symbol_comentario_var;
 }symbol_table_sizes;
 
+typedef struct output_code
+{
+    uint8_t * cadena_retorno;
+    uint16_t indentaciones;
+    uint8_t temp_indentacion;
+}output_code;
+
+
 #include "variable_grammar.h"
 #include "print_grammar.h"
 #include "sintaxis_basica.h"
@@ -62,13 +70,16 @@ typedef struct symbol_table_sizes
 #include "free_lib.h"
 #include "definida_en_comentario.h"
 #include "raw_input_grammar.h"
+#include "if_grammar.h"
 
 extern uint32_t linea;
 extern uint8_t fixed_width;
+extern uint8_t indentacion;
 
-enum {VARIABLE=1,CADENA,NUMERO,IGUAL,OPERADOR,PRINT,R_PARENTESIS,L_PARENTESIS,OPE_DE_PARENTESIS,CONCATENACION,PLUS_CONCAT,CHAR,FLOAT,RAW_INPUT,INT,FLOAT_F,LEN}tokens;
+enum {VARIABLE=1,CADENA,NUMERO,IGUAL,OPERADOR,PRINT,R_PARENTESIS,L_PARENTESIS,OPE_DE_PARENTESIS,CONCATENACION,PLUS_CONCAT,CHAR,FLOAT,RAW_INPUT,INT,FLOAT_F,LEN,IF,MAYOR_QUE,MENOR_QUE,DOS_PUNTOS,ELSE,DISTINTO}tokens;
 
 void debug(const char * format, ...);
+output_code * init_codigo(uint8_t * output, uint16_t espacios, uint8_t temp_indentacion);
 void liberacion_general();
 void libera_tokens(lexical ** lexer, uint8_t size);
 void acomodar_nodos(lexical ** lexer, lexical ** root);
@@ -82,12 +93,16 @@ uint8_t push(balanced ** temp, uint8_t new_data);
 uint8_t check_balanced(uint8_t * cadena, uint8_t token);
 uint8_t * remove_quotes(uint8_t * cadena);
 uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size);
+uint8_t es_angle_bracket(uint8_t valor);
 uint8_t es_operador(uint8_t valor);
 uint8_t check_keyword(uint8_t * token);
 uint8_t check_quotes(uint8_t * token, lexical ** lexer, uint8_t i);
 uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i);
 uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i);
+uint8_t check_indentacion(uint16_t espacios);
 int len_sin_espacios(uint8_t * cadena);
-uint8_t * parser(uint8_t * cadena);
+uint8_t get_index_indent(uint16_t espacios);
+uint8_t get_formato_indent(uint8_t indent);
+output_code * parser(uint8_t * cadena);
 
 #endif
