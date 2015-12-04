@@ -836,6 +836,8 @@ output_code * parser(uint8_t * cadena)
                 liberacion_general();
                 return NULL;
             }
+            if(chars == 0)//NUEVO
+                chars++;
             size++;
             operador = 0;
 
