@@ -1,3 +1,6 @@
+#Para poder usar la funcion raw_input, se debe declarar esta 
+#antes en un comentario
+
 #raw_input
 cadena_input = raw_input()
 print cadena_input
