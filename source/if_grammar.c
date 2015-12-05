@@ -49,7 +49,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
 
     for(i=0;i<size;i++)
     {
-        if(lexer->token != MAYOR_QUE && lexer->token != MENOR_QUE && lexer->token != IGUAL && lexer->token != DOS_PUNTOS)
+        if(lexer->token != MAYOR_QUE && lexer->token != MENOR_QUE && lexer->token != IGUAL && lexer->token != DOS_PUNTOS && lexer->token != DISTINTO)
         {
             if(expresion1 == 0)
             {
@@ -147,7 +147,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
             }
             else if(expresion1 == CADENA && expresion2 == CADENA)
             {
-                if(operador1 == IGUAL && operador2 == IGUAL)
+                if((operador1 == IGUAL || operador1 == DISTINTO) && operador2 == IGUAL)
                 {
                     free(valor_exp1);
                     free(valor_exp2);
@@ -262,6 +262,7 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
    	size -= 1;
 
    	uint8_t last_token = 0;
+   	uint8_t token_t = 0;
     for(i=0;i<size;i++)
     {
     	if(lexer->token == INT)
@@ -272,15 +273,16 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
             strcat(temp, "atof");
         else if(lexer->token == DOS_PUNTOS)
             strcat(temp, ")");
-        else if(ret == 2 && lexer->token == IGUAL)
+        else if(ret == 2 && (lexer->token == IGUAL || lexer->token == DISTINTO))
         {
-            if(last_token == CADENA || last_token == VARIABLE)
-            	strcat(temp, ",");
+             if(last_token == CADENA || last_token == VARIABLE)
+            {
+                strcat(temp, ",");
+                token_t = lexer->token;
+            }
         }         
         else
         {
-            //if(ret == 2 && (last_token == CADENA || last_token == VARIABLE))
-            //    strcat(temp, ",");
             strcat(temp, lexer->valor);
         }
         last_token = lexer->token;
@@ -298,7 +300,10 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
     
     if(ret == 2)
     {
-        strcat(temp, "==0)");
+        if(token_t == IGUAL)
+            strcat(temp, "==0)");
+        else
+            strcat(temp, "!=0)");
     }
 
     sprintf(temp, "%s\n{", temp);
