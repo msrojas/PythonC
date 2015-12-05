@@ -97,7 +97,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                 free(valor_exp2);
                 return 0;
             }
-            else if(expresion1 == VARIABLE)
+            else if(expresion1 == VARIABLE && expresion2 != VARIABLE)
             {
                 uint8_t token = ht_get(valor_exp1);
                 if((token == NUMERO || token == FLOAT) && expresion2 == CADENA)
@@ -121,7 +121,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                     return 2;
                 }
             }
-            else if(expresion2 == VARIABLE)
+            else if(expresion2 == VARIABLE && expresion1 != VARIABLE)
             {
                 uint8_t token = ht_get(valor_exp2);
                 if((token == NUMERO || token == FLOAT) && expresion1 == CADENA)
@@ -178,6 +178,22 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                     free(valor_exp1);
                     free(valor_exp2);
                     return 0;
+                }
+                else if(token1 == CADENA && token2 == CADENA)
+                {
+                	if((operador1 == IGUAL || operador1 == DISTINTO) && operador2 == IGUAL)
+                    {
+                        free(valor_exp1);
+                        free(valor_exp2);
+                        return 2;
+                    }
+                    else 
+                    {
+                        debug("\nError en linea %d: las cadenas de caracteres solo pueden ser usadas con el operador: \"==\"\n", linea);
+                        free(valor_exp1);
+                        free(valor_exp2);
+                        return 0;
+                    }
                 }
             }
             free(valor_exp1);
