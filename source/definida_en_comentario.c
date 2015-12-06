@@ -114,6 +114,8 @@ void * var_remove(uint8_t * key)
 
 uint8_t var_get(uint8_t * key)
 {
+    if(definir == NULL)
+        return 0;
 	uint32_t h = var_calc_hash(key) % definir->size;
 	var_elemento * e = definir->table[h];
 
