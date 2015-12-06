@@ -604,7 +604,13 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
     else if(strcmp(temp, "if") == 0)
         r_token = IF;
     else if(strcmp(temp, "else") == 0)
-        r_token = ELSE;    
+        r_token = ELSE;
+    else if(strcmp(temp, "and") == 0)
+        r_token = AND;
+    else if(strcmp(temp, "or") == 0)
+        r_token = OR;
+    else if(strcmp(temp, "not") == 0)
+        r_token = NOT;    
     else
         r_token = VARIABLE;
 
@@ -789,22 +795,11 @@ output_code * parser(uint8_t * cadena)
                 }
                 memset(temp, 0, sizeof(temp));
             }
-            else if(cadena[i] == ':')
+            else if(cadena[i] == ':' || cadena[i] == '!')
             {
                 temp[0] = cadena[i];
-                if(!agregar_token(&lexer, temp, DOS_PUNTOS))
-                {
-                    acomodar_nodos(&lexer, &root);
-                    libera_tokens(&lexer, size);
-                    liberacion_general();
-                    return NULL;
-                }
-                memset(temp, 0, sizeof(temp));
-            }
-            else if(cadena[i] == '!')
-            {
-                temp[0] = cadena[i];
-                if(!agregar_token(&lexer, temp, DISTINTO))
+                uint8_t token_t = (cadena[i] == ':') ? DOS_PUNTOS : DISTINTO;
+                if(!agregar_token(&lexer, temp, token_t))
                 {
                     acomodar_nodos(&lexer, &root);
                     libera_tokens(&lexer, size);
@@ -836,7 +831,7 @@ output_code * parser(uint8_t * cadena)
                 liberacion_general();
                 return NULL;
             }
-            if(chars == 0)//NUEVO
+            if(chars == 0)
                 chars++;
             size++;
             operador = 0;
