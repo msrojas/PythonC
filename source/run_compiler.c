@@ -367,6 +367,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         print_output_in_archivo(archivo_output, codigo);
+        free(codigo->cadena_retorno);
         free(codigo);
         codigo = NULL;
         memset(cadena, 0, sizeof(cadena));
