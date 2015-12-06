@@ -337,7 +337,7 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
    	size -= 1;
 
    	uint8_t last_token = 0;
-   	uint8_t token_t = 0;
+   	uint8_t token_t1 = 0;
    	uint8_t token_t2 = 0;
    	uint8_t temp_token = 0;
     for(i=0;i<size;i++)
