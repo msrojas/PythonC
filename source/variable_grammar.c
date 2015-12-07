@@ -398,8 +398,9 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 		De esa manera podre determinar el formato adecuado
 		*/
         case NUMERO:
-        { 
-            if(datos->declarada == 0)
+        {
+            uint8_t token_var = ht_get(lexer->valor);	
+            if(token_var == 0)
             {
                 if(fixed_width == 0)
                     len_type = strlen("int ;")+1;
@@ -412,7 +413,7 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             uint8_t temp[len_cadena+len_type];
             memset(temp, 0, sizeof(temp));
 
-            if(datos->declarada == 0)
+            if(token_var == 0)
             {
                 if(fixed_width == 0)
                     sprintf(temp, "int %s", lexer->valor);
@@ -470,13 +471,14 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
         }
         case FLOAT:
         {
+            uint8_t token_var = ht_get(lexer->valor);
             uint8_t token_comentario = var_get(lexer->valor);
             if(token_comentario == 0)
             {
                 debug("\nError en linea %d: la variable \"%s\" tiene operacion con decimales. Debes definir la variable en un comentario como float para poder usarla como tal. Ejemplo\n#float nombre_variable\nAgrega esa linea antes de declarar la variable\n",linea, lexer->valor);
                 return NULL;
             }
-            if(datos->declarada == 0)
+            if(token_var == 0)
                 len_type = strlen("float ;")+1;
             else
                 len_type = strlen(";")+1;
@@ -485,7 +487,7 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             uint8_t temp[len_cadena+len_type];
             memset(temp, 0, sizeof(temp));
 
-            if(datos->declarada == 0)
+            if(token_var == 0)
                 sprintf(temp, "float %s", lexer->valor);
             else
                 strcat(temp, lexer->valor);
