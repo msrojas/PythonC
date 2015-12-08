@@ -26,6 +26,7 @@
 
 uint8_t busca_parentesis(lexical * lexer, uint8_t size);
 uint8_t es_logico(uint8_t token);
+void str_cat(uint8_t * temp, uint8_t * valor, uint8_t token);
 uint16_t buscar_string_comparation(lexical * lexer, uint8_t size);
 uint8_t verificar_strings(uint8_t token1, uint8_t token2);
 uint8_t verificar_expresion(lexical * lexer, uint8_t size);
