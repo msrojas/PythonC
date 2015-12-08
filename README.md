@@ -1,7 +1,7 @@
 # PythonC
 Traducir codigo Python a codigo C/Translate Python code to C code
 <br>
-<h3>Actualizado: 6-diciembre-2015</h3>
+<h3>Actualizado: 8-diciembre-2015</h3>
 PythonC es una herramienta que permite traducir código Python a código C. Ahora cuenta con funciones: función print, definición de variables, concatenaciones, operaciones numéricas, raw_input, int(), float(), len(), <strong>if</strong>, <strong>else</strong>, operadores logicos, elif, while e imprimir indices de cadenas. Pero no hay de que preocuparse, iremos actualizando el código lo más pronto posible.
 <br>
 Los if anidados no fueron probados al 100. Por lo tanto si encuentras un error, favor de avisar a cualquiera de las direcciones que se encuentran abajo.<br>
