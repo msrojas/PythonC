@@ -359,6 +359,7 @@ int main(int argc, char *argv[])
         {
             fclose(archivo_output);
             fclose(archivo);
+            free(symbol);
 
             if(ret == 1)
                 error_delete_file(argv[2]);
