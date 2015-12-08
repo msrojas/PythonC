@@ -378,6 +378,16 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
             if(cadena_retorno == NULL)
                 return NULL;
             break;     
+         case ELIF:
+            if(!check_if_grammar(*lexer, size))
+                return NULL;
+            cadena_retorno = print_original_if(*lexer, size);
+            break;
+        case WHILE:
+             if(!check_if_grammar(*lexer, size))
+                return NULL;
+            cadena_retorno = print_original_if(*lexer, size);
+            break;    
         default:
             debug("\nError en linea %d: se desconoce le tipo: %s\n", linea,(*lexer)->valor);
             return NULL;
@@ -385,6 +395,14 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
 
     datos = NULL;
     return cadena_retorno;
+}
+
+uint8_t es_corchetes(uint8_t valor)
+{
+    if(valor == '[' || valor == ']')
+        return 1;
+    else
+        return 0;
 }
 
 uint8_t es_angle_bracket(uint8_t valor)
@@ -459,12 +477,12 @@ uint8_t check_keyword(uint8_t * token)
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "while") == 0 || strcmp(token, "for") == 0 || strcmp(token, "struct") == 0)
+	else if(strcmp(token, "struct") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "typedef") == 0 || strcmp(token, "break") == 0 || strcmp(token, "continue") == 0)
+	else if(strcmp(token, "typedef") == 0 || strcmp(token, "continue") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
@@ -521,7 +539,7 @@ uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i)
 
     while(1)
     {
-        if(i == len || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == ':' || token[i] == '!')
+        if(i == len || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == ']' || token[i] == ':' || token[i] == '!')
         {
             i--;
             break;
@@ -536,7 +554,7 @@ uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i)
                 return 0;
             }
         }
-        else if(!isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != ',' && token[i] != '.' && token[i] != ':' && token[i] != '!')
+        else if(!isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != ']' && token[i] != ',' && token[i] != '.' && token[i] != ':' && token[i] != '!')
         {
             if(isspace(token[i]))
                 break;
@@ -570,12 +588,12 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
 
     while(1)
     {
-        if(len == i || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == ':' || token[i] == '!')
+        if(len == i || es_operador(token[i]) || es_parentesis(token[i]) || token[i] == ',' || es_angle_bracket(token[i]) || token[i] == '[' || token[i] == ':' || token[i] == '!')
         {
             i--;
             break;
         }
-        else if(!isalpha(token[i]) && !isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != '_' && token[i] != ',' && token[i] != ':' && token[i] != '!')
+        else if(!isalpha(token[i]) && !isdigit(token[i]) && !es_operador(token[i]) && !es_parentesis(token[i]) && !es_angle_bracket(token[i]) && token[i] != '[' && token[i] != '_' && token[i] != ',' && token[i] != ':' && token[i] != '!')
         {
             if(isspace(token[i]))
                 break;
@@ -611,6 +629,10 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
         r_token = OR;
     else if(strcmp(temp, "not") == 0)
         r_token = NOT;    
+    else if(strcmp(temp, "elif") == 0) 
+        r_token = ELIF;
+    else if(strcmp(temp, "while") == 0) 
+        r_token = WHILE;    
     else
         r_token = VARIABLE;
 
@@ -808,6 +830,19 @@ output_code * parser(uint8_t * cadena)
                 }
                 memset(temp, 0, sizeof(temp));
             }
+            else if(es_corchetes(cadena[i]))
+            {
+                temp[0] = cadena[i];
+                uint8_t token_t = (cadena[i] == '[') ? L_CORCHETES : R_CORCHETES;
+                if(!agregar_token(&lexer, temp, token_t))
+                {
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
+                }
+                memset(temp, 0, sizeof(temp));
+            }
             else if(cadena[i] == '\"' || cadena[i] == '\'')
                 i = check_quotes(cadena,&lexer, i);
             else
@@ -918,7 +953,7 @@ output_code * parser(uint8_t * cadena)
         return 0;
     }
 
-    if(lexer->token == IF || lexer->token == ELSE)
+    if(lexer->token == IF || lexer->token == ELSE || lexer->token == ELIF || lexer->token == WHILE)
     {
         indentacion++;
     }
