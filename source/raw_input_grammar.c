@@ -86,9 +86,9 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
             uint16_t len = get_len_numbers(lexer, size);
             uint16_t formato = 0;
             if(token_var == 0)
-                formato = strlen("int * ;")+len+2;
+                formato = strlen("int _int;")+len+2;
             else
-                formato = strlen(";")+len+2;
+                formato = strlen("_int;")+len+2;
             uint8_t temp[formato+1];
             memset(temp, 0, sizeof(temp));
 
@@ -97,15 +97,22 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
             else
                 strcat(temp, lexer->valor);
             lexer = lexer->next;
-            size -= 1;
+            strcat(temp, lexer->valor);
+
+            lexer = lexer->next;
+            lexer = lexer->next;
+            lexer = lexer->next;
+            size -= 3;
             uint8_t last_token = 0;
 
             for(i=0;i<size;i++)
             {
                 if(last_token == L_PARENTESIS && lexer->token == R_PARENTESIS)
                     strcat(temp, "\"\"");
-                else if(lexer->token == INT)
-                    strcat(temp, "atoi");
+                else if(lexer->token == R_PARENTESIS && last_token == R_PARENTESIS)
+                    break;
+                else if(lexer->token == RAW_INPUT)
+                    strcat(temp, "raw_input_int");
                 else 
                     strcat(temp, lexer->valor);
                 last_token = lexer->token;
@@ -138,9 +145,9 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
             uint16_t len = get_len_numbers(lexer, size);
             uint16_t formato = 0;
             if(token_var == 0)
-                formato = strlen("float * ;")+len+2;
+                formato = strlen("float _float;")+len+2;
             else
-                formato = strlen(";")+len+2;
+                formato = strlen("_float;")+len+2;
             uint8_t temp[formato+1];
             memset(temp, 0, sizeof(temp));
 
@@ -149,15 +156,22 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
             else
                 strcat(temp, lexer->valor);
             lexer = lexer->next;
-            size -= 1;
+            strcat(temp, lexer->valor);
+
+            lexer = lexer->next;
+            lexer = lexer->next;
+            lexer = lexer->next;
+            size -= 3;
             uint8_t last_token = 0;
 
             for(i=0;i<size;i++)
             {
                 if(last_token == L_PARENTESIS && lexer->token == R_PARENTESIS)
                     strcat(temp, "\"\"");
-                else if(lexer->token == FLOAT_F)
-                    strcat(temp, "atof");
+                else if(lexer->token == R_PARENTESIS && last_token == R_PARENTESIS)
+                    break;
+                else if(lexer->token == RAW_INPUT)
+                    strcat(temp, "raw_input_float");
                 else 
                     strcat(temp, lexer->valor);
                 last_token = lexer->token;
@@ -312,7 +326,7 @@ uint8_t check_raw_input_grammar(lexical * lexer, uint8_t size, uint8_t token_typ
     {
         if(token_comentario == 0)
         {
-            debug("\nError en linea %d: la variable \"%s\" tiene operacion con decimales. Debes definir la variable en un comentario como float para poder usarla como tal. Ejemplo\n#float nombre_variable\nAgrega esa linea antes de declarar la variable\n",linea, lexer->valor);
+            debug("\nError en linea %d: la variable \"%s\" tiene operacion con decimales. Debes definir la variable en un comentario como float para poder usarla como tal. Ejemplo\n#float nombre_variable\nAgrega esa linea antes de declarar la variable\n",linea, temp);
             return 0;
         }
         if(token != 0 && token != FLOAT)
