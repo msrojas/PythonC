@@ -29,6 +29,7 @@ Memory leak corregido en run_compiler<br>
 Error corregido al momento de concatenar variables con cadenas<br>
 Memory leak corregido en raw_input<br>
 Memory leak corregido en run_compiler.c (otro mas)
+Error corregido al definir variables
 <br>
 <br>
 Si llegas a encontrar un bug o quieres aportar, favor de comunicarte en cualquiera de las dos direcciones:
