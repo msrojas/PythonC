@@ -20,6 +20,94 @@
 */    
 #include "print_grammar.h"
 
+uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size) 
+{
+    uint8_t i=0;
+    uint8_t ret = 0;
+    uint8_t last_token = 0;
+    uint8_t l_corchete = 0;
+    uint8_t r_corchete = 0;
+    uint8_t indice = 0;
+    for(i=index;i<size;i++)
+    {
+        if(l_corchete == 1 && indice == 1 && r_corchete == 1)
+        {
+            ret++;
+            return ret;
+        }
+        else if(lexer->token == L_CORCHETES && l_corchete == 0)
+            l_corchete++;
+        else if(lexer->token == R_CORCHETES && r_corchete == 0)
+            r_corchete++;
+        else if((lexer->token == NUMERO || lexer->token == VARIABLE) && last_token == L_CORCHETES)
+        {
+            if(lexer->token == VARIABLE)
+            {
+                uint8_t token = ht_get(lexer->valor);
+                if(token == NUMERO)
+                    indice++;
+                else
+                {
+                    debug("\nError en linea %d: el indice no es un numero\n", linea);
+                    return 2;
+                }
+            }
+            else 
+                indice++;
+        }
+        else if((lexer->token != NUMERO || lexer->token != VARIABLE) && last_token == L_CORCHETES)
+        {
+            debug("\nError en linea %d: el indice no es numero\n", linea);
+            return 2;
+        }
+        else if((lexer->token == L_CORCHETES && last_token == L_CORCHETES) || (lexer->token == R_CORCHETES && last_token == R_CORCHETES)) //NUEVO
+        {
+            debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
+            return 2;
+        }
+        else if((last_token == NUMERO || last_token == VARIABLE) && (indice == 1 && lexer->token != R_CORCHETES))
+        {
+            debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
+            return 2;
+        }
+
+        last_token = lexer->token;
+        lexer = lexer->next;	
+    }
+
+    if(l_corchete == 1 && indice == 1 && r_corchete == 1)
+    {
+        ret++;
+    }
+
+    return ret;
+}    
+
+uint8_t check_sub_indices(lexical * lexer, uint8_t size) 
+{
+    uint8_t i=0;
+    uint8_t ret = 0;
+    uint8_t token = 0;
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == VARIABLE)
+        {
+            token = ht_get(lexer->valor);
+            if(token == CADENA)
+            {
+                ret = buscar_corchetes(lexer,i,size);
+                if(ret == 1)
+                    lexer->token = CHAR_CORCHETES;
+                else if(ret == 2)
+                    return 0;     
+            }
+        }
+        lexer = lexer->next;
+    }
+
+    return 1;
+}
+
 uint8_t StrCat(lexical * lexer, uint8_t * temp)
 {
     uint8_t token = 0;
@@ -31,6 +119,8 @@ uint8_t StrCat(lexical * lexer, uint8_t * temp)
         strcat(temp, "%s");
     else if(lexer->token == FLOAT)
         strcat(temp, "%f");
+    else if(lexer->token == CHAR_CORCHETES)
+        strcat(temp, "%c");    
     else if(lexer->token == VARIABLE)
     {
         token = ht_get(lexer->valor);
@@ -75,7 +165,9 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
             else if(lexer->token == CADENA)
                 strcat(temp, "printf(\"%s");
             else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
-                strcat(temp, "printf(\"%f");		
+                strcat(temp, "printf(\"%f");	
+            else if(lexer->token == CHAR_CORCHETES)
+                strcat(temp, "printf(\"%c");    
             else if(lexer->token == VARIABLE)
             {
                 token = ht_get(lexer->valor);
@@ -227,6 +319,9 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint8_t len = 0;
             uint8_t len_cadena = 0;
             c_concat = check_concatenacion(lexer, size);
+            uint8_t ret = check_sub_indices(lexer, size);
+            if(ret == 0)
+                return NULL;
             if(datos->declarada == 0 && c_concat == 0)
             {
                 uint8_t ignora_quotes = datos->numero_de_cadenas * 2;
@@ -290,6 +385,9 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint16_t len = get_len_numbers(lexer, size);
             c_concat = check_concatenacion(lexer, size);
             uint16_t formato_len = 0;
+            uint8_t ret = check_sub_indices(lexer, size);
+            if(ret == 0)
+                return NULL;
             if(c_concat > 0)
             {
                 check_float(size, lexer);
@@ -350,6 +448,9 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint16_t len = get_len_numbers(lexer, size);
             c_concat = check_concatenacion(lexer, size);
             uint16_t formato_len = 0;
+            uint8_t ret = check_sub_indices(lexer, size);
+            if(ret == 0)
+                return NULL;
             if(c_concat > 0)
             {
                 check_float(size, lexer);
