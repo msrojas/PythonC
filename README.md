@@ -28,7 +28,7 @@ Error corregido en definida_en_comentario.c<br>
 Memory leak corregido en run_compiler<br>
 Error corregido al momento de concatenar variables con cadenas<br>
 Memory leak corregido en raw_input<br>
-Memory leak corregido en run_compiler.c (otro mas)
+Memory leak corregido en run_compiler.c (otro mas)<br>
 Error corregido al definir variables
 <br>
 <br>
