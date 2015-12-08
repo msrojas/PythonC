@@ -206,6 +206,21 @@ void print_raw_input(FILE * archivo)
     fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");
     fprintf(archivo, "%*s\n", strlen("return get_input;")+4, "return get_input;");
     fprintf(archivo, "}\n");
+    fprintf(archivo, "%*s\n", strlen("int raw_input_int(char * input)"), "int raw_input_int(char * input)");
+    fprintf(archivo, "{\n");
+    fprintf(archivo, "%*s\n", strlen("char * get_input = raw_input(input);")+4, "char * get_input = raw_input(input);");
+    fprintf(archivo, "%*s\n", strlen("int numero = atoi(get_input);")+4, "int numero = atoi(get_input);");
+    fprintf(archivo, "%*s\n", strlen("free(get_input);")+4, "free(get_input);");
+    fprintf(archivo, "%*s\n", strlen("return numero;")+4, "return numero;");
+    fprintf(archivo, "}\n");
+    fprintf(archivo, "%*s\n", strlen("int raw_input_float(char * input)"), "int raw_input_float(char * input)");
+    fprintf(archivo, "{\n");
+    fprintf(archivo, "%*s\n", strlen("char * get_input = raw_input(input);")+4, "char * get_input = raw_input(input);");
+    fprintf(archivo, "%*s\n", strlen("float numero = atof(get_input);")+4, "float numero = atof(get_input);");
+    fprintf(archivo, "%*s\n", strlen("free(get_input);")+4, "free(get_input);");
+    fprintf(archivo, "%*s\n", strlen("return numero;")+4, "return numero;");
+    fprintf(archivo, "}\n");
+
 }
 
 uint8_t Es_Operador(uint8_t valor)
