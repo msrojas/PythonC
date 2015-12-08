@@ -76,7 +76,7 @@ extern uint32_t linea;
 extern uint8_t fixed_width;
 extern uint8_t indentacion;
 
-enum {VARIABLE=1,CADENA,NUMERO,IGUAL,OPERADOR,PRINT,R_PARENTESIS,L_PARENTESIS,OPE_DE_PARENTESIS,CONCATENACION,PLUS_CONCAT,CHAR,FLOAT,RAW_INPUT,INT,FLOAT_F,LEN,IF,MAYOR_QUE,MENOR_QUE,DOS_PUNTOS,ELSE,DISTINTO,AND,OR,NOT,STRCMP}tokens;
+enum {VARIABLE=1,CADENA,NUMERO,IGUAL,OPERADOR,PRINT,R_PARENTESIS,L_PARENTESIS,OPE_DE_PARENTESIS,CONCATENACION,PLUS_CONCAT,CHAR,FLOAT,RAW_INPUT,INT,FLOAT_F,LEN,IF,MAYOR_QUE,MENOR_QUE,DOS_PUNTOS,ELSE,DISTINTO,AND,OR,NOT,STRCMP,STRCMP,ELIF,WHILE,R_CORCHETES,L_CORCHETES,CHAR_CORCHETES}tokens;
 
 void debug(const char * format, ...);
 output_code * init_codigo(uint8_t * output, uint16_t espacios, uint8_t temp_indentacion);
@@ -93,6 +93,7 @@ uint8_t push(balanced ** temp, uint8_t new_data);
 uint8_t check_balanced(uint8_t * cadena, uint8_t token);
 uint8_t * remove_quotes(uint8_t * cadena);
 uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size);
+uint8_t es_corchetes(uint8_t valor);
 uint8_t es_angle_bracket(uint8_t valor);
 uint8_t es_operador(uint8_t valor);
 uint8_t check_keyword(uint8_t * token);
