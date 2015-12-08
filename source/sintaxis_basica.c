@@ -34,6 +34,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
     uint8_t token = 0;
     uint8_t temp_token = 0;
     uint8_t cuenta_lparentesis = 0;
+    uint8_t r_corhcetes = 0;
+    uint8_t l_corchetes = 0;
     uint8_t temp[150];
     memset(temp, 0, sizeof(0));
 
@@ -52,7 +54,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
 
     for(i=0;i<size;i++)
     {
-        if((lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION || lexer->token == RAW_INPUT) && last_token == 0)
+        if((lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION || lexer->token == RAW_INPUT || lexer->token == R_CORCHETES) && last_token == 0)
         {
             debug("\nError en linea %d: sintaxis invalida: %s\n", linea,lexer->valor);
             free(datos);
@@ -247,7 +249,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     free(datos);
                     return NULL;
                 }
-                else if((ret_token == NUMERO && temp_token == 0 && token == CADENA && last_token != CONCATENACION) || (ret_token == CADENA && last_token != CONCATENACION && (token == NUMERO || token == FLOAT)) || (ret_token == FLOAT && temp_token == 0 && token == CADENA && last_token != CONCATENACION))
+                else if((ret_token == NUMERO && temp_token == 0 && token == CADENA && last_token != CONCATENACION && last_token != PLUS_CONCAT) || (ret_token == CADENA && last_token != CONCATENACION && (token == NUMERO || token == FLOAT)) || (ret_token == FLOAT && temp_token == 0 && token == CADENA && last_token != CONCATENACION && last_token != PLUS_CONCAT))
                 {
                     debug("\nError en linea %d: la variable \"%s\" es otro tipo de dato\n", linea,lexer->valor);
                     free(datos);
@@ -288,7 +290,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                 free(datos);
                 return NULL;
             }
-            else if(last_token == CADENA && strcmp(lexer->valor, "+") == 0)
+            else if((last_token == CADENA || last_token == R_CORCHETES) && strcmp(lexer->valor, "+") == 0)
             {
                 lexer->token = PLUS_CONCAT;
             }
@@ -364,6 +366,15 @@ data * basic_grammar(lexical * lexer, uint8_t size)
             free(datos);
             return NULL;
         }
+        else if((lexer->token == L_CORCHETES && (last_token == L_CORCHETES || last_token == R_CORCHETES || last_token == CADENA)) || (lexer->token == R_CORCHETES && last_token == R_CORCHETES)) //NUEVO
+        {
+            debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
+            return NULL;
+        }
+        else if(lexer->token == L_CORCHETES)
+            l_corchetes++;
+        else if(lexer->token == R_CORCHETES)
+            r_corhcetes++;
 
         memset(temp, 0, sizeof(temp));
         last_token = lexer->token;
@@ -371,9 +382,15 @@ data * basic_grammar(lexical * lexer, uint8_t size)
         lexer = lexer->next;
     }
 
-    if(last_token == OPERADOR || last_token == CONCATENACION || last_token == L_PARENTESIS || last_token == PLUS_CONCAT || last_token == INT || last_token == FLOAT_F || last_token == LEN)
+    if(last_token == OPERADOR || last_token == CONCATENACION || last_token == L_PARENTESIS || last_token == PLUS_CONCAT || last_token == INT || last_token == FLOAT_F || last_token == LEN || last_token == L_CORCHETES)
     {
         debug("\nError en linea %d: sintaxis invalida de operador\n",linea);
+        free(datos);
+        return NULL;
+    }
+    else if(l_corchetes > 0 && r_corhcetes == 0)
+    {
+        debug("\nError en linea %d: falta caracter \"]\"\n", linea);
         free(datos);
         return NULL;
     }
