@@ -25,9 +25,9 @@ Error corregido en definicion de variables
 Buffer overflow corregido<br>
 Error corregido en if_grammar.c<br>
 Error corregido en definida_en_comentario.c<br>
-Memory leak corregido en run_compiler
-Error corregido al momento de concatenar variables con cadenas
-Memory leak corregido en raw_input
+Memory leak corregido en run_compiler<br>
+Error corregido al momento de concatenar variables con cadenas<br>
+Memory leak corregido en raw_input<br>
 Memory leak corregido en run_compiler.c (otro mas)
 <br>
 <br>
