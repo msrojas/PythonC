@@ -42,6 +42,14 @@ uint8_t es_logico(uint8_t token)
         return 0;
 }
 
+void str_cat(uint8_t * temp, uint8_t * valor, uint8_t token) //NUEVO
+{
+    if(token == IF || token == WHILE)
+        strcat(temp, valor);
+    else if(token == ELIF)
+        strcat(temp, "else if");
+}
+
 uint16_t buscar_string_comparation(lexical * lexer, uint8_t size)
 {
     uint8_t i=0;
@@ -323,6 +331,8 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
     uint8_t formato = 0;
     uint16_t len = get_len_numbers(lexer, size);
     formato = strlen("(\n");
+    if(lexer->token == ELIF)
+        formato += 3;
     uint16_t len_strcmp = buscar_string_comparation(lexer, size);
     if(len > 0)
        formato += len_strcmp;
@@ -330,7 +340,7 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
     uint8_t parentesis = busca_parentesis(lexer, size);
     memset(temp, 0, sizeof(temp));
 
-    strcat(temp, lexer->valor);
+    str_cat(temp, lexer->valor, lexer->token); 
     strcat(temp, "(");
     
     lexer = lexer->next;
