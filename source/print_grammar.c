@@ -70,6 +70,8 @@ uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size)
             debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
             return 2;
         }
+        else if(lexer->token == CONCATENACION || lexer->token == PLUS_CONCAT)
+            break;
 
         last_token = lexer->token;
         lexer = lexer->next;	
