@@ -14,7 +14,7 @@ Solo traduce código Python 2.7
 
 <h3>English: Translate Python code to C code</h3>
 PythonC is a tool that generate C code using python. For the moment the tool count with the functions: print, definition of variables, concatenations, number operations, int(), float(), len(), if , else, logical operators, elif, while and print one char of a variable (print var[1]). But not worry, we’ll go updating the most soon possible.<br><br>
-To translate the code efficiently, you will have to see the documentation: <a href="https://pythoncblog.wordpress.com/documentacion/">link</a><br><br>
+To translate the code efficiently, you will have to see the documentation: <a href="https://pythoncblog.wordpress.com/documentation/">link</a><br><br>
 
 <h3>Compilar/Compile</h3>
 Para compilar solo ejecuta el makefile que viene dentro de la carpeta source: make compilador<br>
