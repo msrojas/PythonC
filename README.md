@@ -17,8 +17,8 @@ PythonC is a tool that generate C code using python. For the moment the tool cou
 To translate the code efficiently, you will have to see the documentation: <a href="https://pythoncblog.wordpress.com/documentacion/">link</a><br><br>
 
 <h3>Compilar/Compile</h3>
-Para compilar solo ejecuta el makefile que viene dentro de la carpeta source: make compilador
-To compile just execute the makefile. You will found in the directory source: make compilador
+Para compilar solo ejecuta el makefile que viene dentro de la carpeta source: make compilador<br>
+To compile just execute the makefile. You will find it in the directory source: make compilador
 <br>
 Para ejecutar/To execute: ./compilador ejemplo.py
 
