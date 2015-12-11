@@ -204,6 +204,7 @@ void print_raw_input(FILE * archivo)
     fprintf(archivo, "%*s\n", strlen("}")+8, "}");
     fprintf(archivo, "%*s\n", strlen("get_input[indice++] = c;")+8, "get_input[indice++] = c;");
     fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");
+    fprintf(archivo, "%*s\n", strlen("get_input[indice] = \'\\0\';")+4, "get_input[indice] = \'\\0\';");
     fprintf(archivo, "%*s\n", strlen("return get_input;")+4, "return get_input;");
     fprintf(archivo, "}\n");
     fprintf(archivo, "%*s\n", strlen("int raw_input_int(char * input)"), "int raw_input_int(char * input)");
