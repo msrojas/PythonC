@@ -47,6 +47,7 @@ extern var_definidas * definir;
 
 #define VAR_ITERATOR(ht) {ht, 0, ht->table[0]}
 
+
 uint8_t init_definir(unsigned int size);
 unsigned int var_calc_hash(uint8_t * key);
 uint8_t var_put(uint8_t * key, uint8_t token);
@@ -63,6 +64,5 @@ uint8_t verificar_raw_input(uint8_t * cadena, FILE * archivo_output);
 uint8_t buscar_funciones(FILE * archivo, FILE * archivo_output);
 uint8_t comentario_parser(uint8_t * cadena, uint16_t index, uint8_t token_t);
 uint8_t * comentario_free(uint8_t * cadena, uint16_t index);
-uint8_t verificar_comentario(uint8_t * cadena,unsigned int size);
-
+uint8_t verificar_comentario(uint8_t * cadena,datos_comentarios * datos);
 #endif
