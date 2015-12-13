@@ -54,7 +54,7 @@ unsigned int ht_calc_hash(uint8_t * key)
 	return h;
 }
 
-uint8_t ht_put(uint8_t * key, uint8_t token)
+uint8_t ht_put(uint8_t * key, uint8_t token, uint8_t token_function,uint8_t * value)
 {
 	unsigned int h = ht_calc_hash(key) % hash->size;
 	hash_elem_t * e = hash->table[h];
@@ -85,6 +85,19 @@ uint8_t ht_put(uint8_t * key, uint8_t token)
 
 	strcpy(e->var_name, key);
 	e->token = token;
+	e->token_function = token_function;
+	if(value != NULL) //NUEVO
+	{
+	    e->value = malloc(strlen(value)+1);
+	    if(e->value == NULL)
+	    {
+	        debug("\nError: ocurrio un inconveniente en la heap\n");
+	        return 0;
+	    }
+	    strcpy(e->value, value);
+	}
+	else
+	    e->value = NULL;
 
 	e->next = hash->table[h];
 	hash->table[h] = e;
@@ -108,6 +121,8 @@ void * ht_remove(uint8_t * key)
 				prev->next = e->next;
 			else
 				hash->table[h] = e->next;
+			if(e->value != NULL)
+			    free(e->value);
 			free(e);
 			e = NULL;
 			return data;
@@ -120,9 +135,38 @@ void * ht_remove(uint8_t * key)
 
 }
 
+uint16_t ht_get_len(uint8_t * key)
+{
+    uint32_t h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0 && e->token_function == ZERO)
+        {
+            uint16_t len = 0;
+            if(e->value != NULL)
+                len = strlen(e->value);
+            else
+                break;
+            return len;
+        }
+        else if(strcmp(e->var_name, key) == 0 && e->token_function == RAW_INPUT)
+        {
+            uint16_t len = 0;
+            len = strlen(key)+2;
+            return len;
+        }
+
+        e = e->next;
+    }
+    debug("\nError: bug en funcion: ht_get_len\n");
+    return 0;
+}
+
 uint8_t ht_get(uint8_t * key)
 {
-	unsigned int h = ht_calc_hash(key) % hash->size;
+	uint32_t h = ht_calc_hash(key) % hash->size;
 	hash_elem_t * e = hash->table[h];
 
 	while(e != NULL)
@@ -180,4 +224,201 @@ void ht_destroy()
 	ht_clear(1);
 	free(hash->table);
 	free(hash);
+}
+
+uint8_t * ht_get_value(uint8_t * key)
+{
+    uint32_t h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0 && e->token_function == ZERO)
+        {
+            uint8_t * string = NULL;
+            if(e->value != NULL)
+            {
+                string = malloc(strlen(e->value)+1);
+                if(string == NULL)
+                {
+                    debug("Error: ocurrio un inconveniente en la heap");
+                    return NULL;
+                }
+                strcpy(string, e->value);
+            }
+            else
+                break;
+            return string;
+        }
+        else if(strcmp(e->var_name, key) == 0 && e->token_function == RAW_INPUT)
+        {
+            uint8_t * string = NULL;
+            string = malloc(strlen(key)+3);
+            if(string == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            //strcpy(string, key);
+            sprintf(string, "\n%s", key);
+            return string;
+        }
+
+        e = e->next;
+    }
+    debug("\nError: bug en funcion: ht_get_value\n");
+    return NULL;
+}
+
+uint16_t get_len_value(lexical * lexer, uint8_t size)
+{
+    uint8_t i=0;
+    uint16_t len = 0;
+    uint16_t len_value = 0;
+    uint8_t token = 0;
+    lexer = lexer->next;
+    lexer = lexer->next;
+
+    size -= 2;
+
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == CADENA )
+        {
+            len += strlen(lexer->valor);
+        }
+        else if(lexer->token == VARIABLE)
+        {
+            token = ht_get(lexer->valor);
+            if(token == 0)
+            {
+                debug("\nErrno en linea %d: la variable no ha sido declarada: %s\n", linea,lexer->valor);
+                return 0;
+            }
+            else if(token != CADENA)
+            {
+                debug("\nErrno en linea %d: la variable no es tipo cadena: %s\n", linea,lexer->valor);
+                return 0;
+            }
+            else if(token == CADENA)
+            {
+                len_value = ht_get_len(lexer->valor);
+                if(len_value == 0)
+                    return 0;
+                len += len_value;
+            }
+        }
+        lexer = lexer->next;
+    }
+
+    return len;
+}
+
+uint8_t * agregar_valor(lexical * lexer, uint8_t size) //NUEVO
+{
+    uint8_t i=0;
+    uint8_t token = 0;
+    uint16_t len = get_len_value(lexer, size);
+    if(len == 0)
+        return NULL;
+    uint8_t temp[len+1];
+    memset(temp, 0, sizeof(temp));
+    uint8_t * string = NULL;
+
+    lexer = lexer->next;
+    lexer = lexer->next;
+
+    size -= 2;
+
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == CADENA )
+        {
+            strcat(temp, lexer->valor);
+        }
+        else if(lexer->token == VARIABLE)
+        {
+            token = ht_get(lexer->valor);
+            if(token == 0)
+            {
+                debug("\nErrno en linea %d: la variable no ha sido declarada: %s\n", linea,lexer->valor);
+                return NULL;
+            }
+            else if(token != CADENA)
+            {
+                debug("\nErrno en linea %d: la variable no es tipo cadena: %s\n", linea,lexer->valor);
+                return NULL;
+            }
+            else if(token == CADENA)
+            {
+                string = ht_get_value(lexer->valor);
+                if(string == NULL)
+                    return NULL;
+                strcat(temp, string);
+                free(string);
+                string = NULL;
+            }
+        }
+        lexer = lexer->next;
+    }
+    uint8_t * retorna = malloc(strlen(temp)+1);
+    if(retorna == NULL)
+    {
+        debug("\nError: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+    strcpy(retorna, temp);
+    return retorna;
+}
+
+uint8_t update_valor(uint8_t * key, uint8_t * value)
+{
+    uint32_t h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0)
+        {
+        	if(e->token_function == ZERO)
+            {
+                free(e->value);
+                e->value = NULL;
+            }   
+            e->value = malloc(strlen(value)+1);
+            if(e->value == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return 0;
+            }
+            strcpy(e->value, value);
+            if(e->token_function != ZERO)
+                e->token_function = ZERO;
+            return 1;
+        }
+
+        e = e->next;
+    }
+    debug("\nError: bug en funcion: update_valor\n");
+    return 0;
+}
+
+uint8_t update_token_function(uint8_t * key, uint8_t token_function)
+{
+    uint32_t h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0)
+        {
+        	if(e->token_function != RAW_INPUT)
+        	    e->token_function = RAW_INPUT;
+            return 1;
+        }
+
+        e = e->next;
+    }
+    debug("\nError: bug en funcion: update_token_function\n");
+    return 0;
 }
