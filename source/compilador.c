@@ -913,6 +913,8 @@ output_code * parser(uint8_t * cadena)
             }
             else if(cadena[i] == '\"' || cadena[i] == '\'')
                 i = check_quotes(cadena,&lexer, i);
+            else if(cadena[i] == '#')
+                break;
             else
             {	
                 if(i != len)
