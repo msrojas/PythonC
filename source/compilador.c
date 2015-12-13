@@ -57,14 +57,82 @@ output_code * init_codigo(uint8_t * output, uint16_t espacios, uint8_t temp_inde
     return codigo;
 }
 
+output_code * get_output(uint8_t * cadena_retorno,uint16_t espacios)
+{
+    uint8_t * temp_retorno = NULL;
+    uint8_t temp_indentacion = 0;
+    uint8_t i = 0;
+    if(espacios == 0 && indentacion > 0)
+    {
+        uint8_t formato = get_formato_indent(indentacion);
+        temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
+        if(temp_retorno == NULL)
+        {
+            debug("\nError: ocurrio un inconveniente en la heap\n");
+            return NULL;
+        }
+        for(i=0;i<indentacion;i++)
+        {
+            if(i==0)
+                sprintf(temp_retorno, "}\n");
+            else
+                sprintf(temp_retorno, "%s}\n", temp_retorno);
+        }
+        strcat(temp_retorno, cadena_retorno);
+        temp_indentacion = indentacion;
+        indentacion = 0;
+    }
+    else if(espacios > 0 && indentacion > 0)
+    {
+        uint8_t index_indent = get_index_indent(espacios);
+        if(index_indent > 0)
+        {
+            uint8_t formato = get_formato_indent(index_indent);
+            temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
+            if(temp_retorno == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            for(i=index_indent;i<indentacion;i++)
+            {
+                if(i==index_indent)
+                    sprintf(temp_retorno, "}\n");
+                else
+                    sprintf(temp_retorno, "%s}\n", temp_retorno);
+            }
+            strcat(temp_retorno, cadena_retorno);
+            uint8_t diferencia = indentacion - index_indent;
+            temp_indentacion = diferencia + index_indent;
+            index_indent = indentacion - index_indent;
+            indentacion -= index_indent;
+        }
+    }
+    
+    output_code * codigo = NULL;
+
+    if(temp_retorno == NULL)
+        codigo = init_codigo(cadena_retorno, espacios, temp_indentacion);
+    else
+        codigo = init_codigo(temp_retorno, espacios, temp_indentacion);
+    if(codigo == NULL)
+    {
+        free(temp_retorno);
+        liberacion_general();
+        return 0;
+    }
+
+    if(temp_retorno != NULL)
+        free(temp_retorno);
+    return codigo;
+}
 
 void liberacion_general()
 {
     ht_destroy();
-    if(free_variables != NULL)
+    if(free_hash != NULL)
     {
-        acomodar_free_vars();
-        libera_free_vars();
+        free_destroy();
     }
     if(definir != NULL)
         var_destroy();
@@ -891,67 +959,7 @@ output_code * parser(uint8_t * cadena)
 	return 0;
     }
 	
-    uint8_t * temp_retorno = NULL;
-    uint8_t temp_indentacion = 0;
-    if(espacios == 0 && indentacion > 0)
-    {
-        uint8_t formato = get_formato_indent(indentacion);
-        temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
-        if(temp_retorno == NULL)
-        {
-            debug("\nError: ocurrio un inconveniente en la heap\n");
-            return NULL;
-        }
-        for(i=0;i<indentacion;i++)
-        {
-            if(i==0)
-                sprintf(temp_retorno, "}\n");
-            else
-                sprintf(temp_retorno, "%s}\n", temp_retorno);
-        }
-        strcat(temp_retorno, cadena_retorno);
-        temp_indentacion = indentacion;
-        indentacion = 0;
-    }
-    else if(espacios > 0 && indentacion > 0)
-    {
-        uint8_t index_indent = get_index_indent(espacios);
-        if(index_indent > 0)
-        {
-            uint8_t formato = get_formato_indent(index_indent);
-            temp_retorno = (uint8_t *)malloc(strlen(cadena_retorno)+1+formato+1);
-            if(temp_retorno == NULL)
-            {
-                debug("\nError: ocurrio un inconveniente en la heap\n");
-                return NULL;
-            }
-            for(i=index_indent;i<indentacion;i++)
-            {
-                if(i==index_indent)
-                    sprintf(temp_retorno, "}\n");
-                else
-                    sprintf(temp_retorno, "%s}\n", temp_retorno);
-            }
-            strcat(temp_retorno, cadena_retorno);
-            uint8_t diferencia = indentacion - index_indent;
-            temp_indentacion = diferencia + index_indent;
-            index_indent = indentacion - index_indent;
-            indentacion -= index_indent;
-        }
-    }
-    
-    output_code * codigo = NULL;
-
-    if(temp_retorno == NULL)
-        codigo = init_codigo(cadena_retorno, espacios, temp_indentacion);
-    else
-        codigo = init_codigo(temp_retorno, espacios, temp_indentacion);
-    if(codigo == NULL)
-    {
-        libera_tokens(&lexer, size);
-        liberacion_general();
-        return 0;
-    }
+    output_code * codigo = get_output(cadena_retorno, espacios);
 
     if(lexer->token == IF || lexer->token == ELSE || lexer->token == ELIF || lexer->token == WHILE)
     {
@@ -960,8 +968,6 @@ output_code * parser(uint8_t * cadena)
 	
     libera_tokens(&lexer, size);
     free(cadena_retorno);
-    if(temp_retorno != NULL)
-        free(temp_retorno); 
 
     return codigo;
 }
