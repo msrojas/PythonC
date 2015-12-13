@@ -1,12 +1,12 @@
 #raw_input
 
-#raw_input almacena memoria en la heap. Por lo tanto, deberas decirle
+##raw_input almacena memoria en la heap. Por lo tanto, deberas decirle
 #mediante un comentario cuando liberar la variable:
 ##free(variable) (solo con un '#')
 #NOTA: ESO SOLO ES NECESARIO CUANDO LLAMAS RAW_INPUT PARA ALMACENAR CARACTERES DENTRO DE UN WHILE
 #Si ese no es el caso, el compilador sera el encargado de liberar la variable
 
-#raw_input storage memory in heap. Therefore, you will have to write the next instruction
+##raw_input storage memory in heap. Therefore, you will have to write the next instruction
 ##free(variable) (just with one '#')
 #NOTE: THIS IS ONLY NECESSARY WHEN YOU CALL RAW_INPUT TO SAVE STRINGS INSIDE OF WHILE
 #If that is not the case, the compiler would be the responsible to free the variable
