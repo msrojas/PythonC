@@ -14,11 +14,12 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
         case CADENA:
         {
             uint16_t len = get_len_numbers(lexer, size);
+            uint16_t token_free = free_get(temp_cadena);
             uint16_t formato = 0;
             if(token_var == 0)
                 formato = strlen("char * ;")+len+2;
             else
-                formato = strlen("free();\n;")+strlen(lexer->valor)+len+2;
+                formato = strlen("free();\n=NULL;\n;")+strlen(lexer->valor)+strlen(lexer->valor)+len+2;
             uint8_t temp[formato];
             memset(temp, 0, sizeof(temp));
 
@@ -26,7 +27,8 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
                 sprintf(temp, "char * %s",lexer->valor);
             else
             {
-                sprintf(temp, "free(%s);\n", lexer->valor);
+                if(token_free == 1)
+                    sprintf(temp, "free(%s);\n%s=NULL;\n", lexer->valor, lexer->valor);
                 strcat(temp, lexer->valor);
             }
             lexer = lexer->next;
@@ -53,28 +55,35 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
 
             if(token_var == 0)
             {
-                if(ht_put(temp_cadena, CADENA) == 2)
+                if(ht_put(temp_cadena, CADENA, RAW_INPUT,NULL) == 2)
                 {
                     printf("Errno\n");
                     free(retorno);
                     return NULL;
                 }
-                if(free_variables == NULL && free_root == NULL)
-                {
-                    if(!init_free())
-                    {
-                        free(retorno);
-                        return NULL;
-                    }
-                    free_variables->var_name = NULL;
-                    free_root = free_variables;
-                }
-                if(!agregar_free_var(temp_cadena))
+            
+                uint8_t ret_val = free_put(temp_cadena, 1); //NUEVO
+                if(ret_val == 0 || ret_val == 2)
                 { 
                     free(retorno);
                     return NULL;
                 }
-                size_free++;
+            }
+            else if(token_var != 0)
+            {
+                if(token_free == 0)
+                {
+                    if(!free_libera(temp_cadena, 1))
+                    {
+                        free(retorno);
+                        return NULL;
+                    }
+                }
+                if(!update_token_function(temp_cadena,RAW_INPUT))
+                {
+                    free(retorno);
+                    return NULL;
+                }
             }
 
             //printf("%d : %d\n", strlen(temp), sizeof(temp));
@@ -130,7 +139,7 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
 
             if(token_var == 0)
             {
-                if(ht_put(temp_cadena, NUMERO) == 2)
+                if(ht_put(temp_cadena, NUMERO, RAW_INPUT,NULL) == 2)
                 {
                     printf("Errno\n");
                     free(retorno);
@@ -189,7 +198,7 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
 
             if(token_var == 0)
             {
-                if(ht_put(temp_cadena, FLOAT) == 2)
+                if(ht_put(temp_cadena, FLOAT, RAW_INPUT,NULL) == 2)
                 {
                     printf("Errno\n");
                     free(retorno);
