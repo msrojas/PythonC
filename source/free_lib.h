@@ -23,20 +23,40 @@
 
 #include "compilador.h"
 
-typedef struct free_struct
+typedef struct free_elem_t
 {
-	uint8_t * var_name;
-	struct free_struct * next;
-}free_struct;
+    struct free_elem_t * next;
+    uint8_t * var_name;
+    uint8_t liberada;
+}free_elem_t;
 
-extern free_struct * free_variables;
-extern free_struct * free_root;
-extern uint32_t size_free;
+typedef struct free_table_t
+{
+    uint32_t size;
+    free_elem_t ** table;
+}free_table_t;
 
-void libera_free_vars();
+typedef struct free_elem_it
+{
+    free_table_t * ht;
+    uint32_t index;
+    free_elem_t * elem;
+}free_elem_it;
+
+extern free_table_t * free_hash;
+
+#define FREE_ITERATOR(ht) {ht, 0, ht->table[0]}
+
+free_table_t * free_create(uint32_t size);
+uint32_t free_calc_hash(uint8_t * key);
+uint8_t free_libera(uint8_t * key,uint8_t liberar);
+uint8_t free_put(uint8_t * key, uint8_t token);
+void * free_remove(uint8_t * key);
+uint8_t free_get(uint8_t * key);
+free_elem_t * free_iterate(free_elem_it * iterator);
+uint8_t * free_iterate_keys(free_elem_it * iterator);
+void free_clear(int free_data);
+void free_destroy();
 void free_vars_compile(FILE * archivo);
-void acomodar_free_vars();
-uint8_t agregar_free_var(uint8_t * var);
-uint8_t init_free();
 
 #endif
