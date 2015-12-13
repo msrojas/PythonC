@@ -98,7 +98,7 @@ void * var_remove(uint8_t * key)
 
             if(prev != NULL)
                 prev->next = e->next;
-            else
+			else
                 definir->table[h] = e->next;
             free(e);
             e = NULL;
@@ -176,7 +176,7 @@ void var_destroy()
 	free(definir);
 }
 
-void print_strchar(FILE * archivo) 
+void print_strchar(FILE * archivo) //NUEVO
 {
     fprintf(archivo, "void strchar(char * str, char c)\n");
     fprintf(archivo, "{\n");
@@ -369,19 +369,24 @@ uint8_t comentario_parser(uint8_t * cadena, uint16_t index, uint8_t token_t)
 
     if(!check_keyword(temp))
         return 0;
+    else if(indice == 0)
+    {
+        debug("\nError en linea %d: debes ingresar el nombre de una variable\n", linea);
+        return 0;
+    }
 
 	uint8_t token = ht_get(temp);
 	if(token != 0)
 	{
-            if(token == NUMERO && token_t == CHAR)
-                debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes declarla como \"char\"\n",linea,temp);
-            else if((token == CADENA || token == FLOAT) && token_t == CHAR)
-                debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"char\"\n",linea,temp);
-            else if(token == NUMERO && token_t == FLOAT)
-                debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes redefinirla como \"float\"",linea,temp);
-            else if(token == FLOAT && token_t == FLOAT)
-                debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"float\"\n",linea,temp);
-            return 0;
+		if(token == NUMERO && token_t == CHAR)
+			debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes declarla como \"char\"\n",linea,temp);
+		else if((token == CADENA || token == FLOAT) && token_t == CHAR)
+			debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"char\"\n",linea,temp);
+		else if(token == NUMERO && token_t == FLOAT)
+			debug("\nError en linea %d: la variable \"%s\" ya fue declarada como entero. Por lo tanto, no puedes redefinirla como \"float\"",linea,temp);
+		else if(token == FLOAT && token_t == FLOAT)
+			debug("\nError en linea %d: la variable \"%s\" ya fue declarada. No puedes redefinirla como \"float\"\n",linea,temp);
+		return 0;
 	}
     else if(token == 0)
     {
@@ -491,7 +496,7 @@ uint8_t * comentario_free(uint8_t * cadena, uint16_t index) //NUEVO
     return retorna;
 }
 
-uint8_t verificar_comentario(uint8_t * cadena,uint32_t size)
+uint8_t verificar_comentario(uint8_t * cadena, datos_comentarios * datos)
 {
     if(datos->token == CHAR)
     {
@@ -506,4 +511,5 @@ uint8_t verificar_comentario(uint8_t * cadena,uint32_t size)
 
     return 1;
 }
+
 
