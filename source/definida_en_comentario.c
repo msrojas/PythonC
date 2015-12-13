@@ -176,6 +176,17 @@ void var_destroy()
 	free(definir);
 }
 
+void print_strchar(FILE * archivo) 
+{
+    fprintf(archivo, "void strchar(char * str, char c)\n");
+    fprintf(archivo, "{\n");
+    fprintf(archivo, "%*s\n", strlen("char temp[2];")+4,"char temp[2];");
+    fprintf(archivo, "%*s\n\n", strlen("memset(temp, 0, sizeof(temp));")+4,"memset(temp, 0, sizeof(temp));");
+    fprintf(archivo, "%*s\n", strlen("temp[0] = c;")+4,"temp[0] = c;");
+    fprintf(archivo, "%*s\n", strlen("strcat(str, temp);")+4,"strcat(str, temp);");
+    fprintf(archivo, "}\n");
+}
+
 void print_raw_input(FILE * archivo)
 {
     fprintf(archivo, "%*s\n", strlen("char * raw_input(char * input)"), "char * raw_input(char * input)");
@@ -387,34 +398,109 @@ uint8_t comentario_parser(uint8_t * cadena, uint16_t index, uint8_t token_t)
     return 1;
 }
 
-uint8_t verificar_comentario(uint8_t * cadena,uint32_t size)
+uint8_t * comentario_free(uint8_t * cadena, uint16_t index) //NUEVO
 {
     uint16_t len = strlen(cadena);
-    uint8_t temp[len+1];
-    memset(temp, 0, sizeof(temp));
 
-    uint16_t i=0;
+    uint8_t temp[len+1];
+    uint8_t c1[2];
+    uint8_t c2[2];
+    uint8_t chars = 0;
+    uint8_t espacios = 0;
     uint16_t indice = 0;
-    for(i=1;i<len;i++)
+
+    memset(temp, 0, sizeof(temp));
+    memset(c1, 0, sizeof(c1));
+    memset(c2, 0, sizeof(c2));
+
+    uint8_t i = 0;
+    for(i=index;i<len;i++)
     {
         if(isspace(cadena[i]))
-            break;
+        {
+            if(chars == 1 && espacios == 0)
+                espacios++;
+        }
+        else if(cadena[i] == '(')
+        {
+            if(c1[0] != '\0')
+            {
+                debug("\nError en linea %d: Parentesis desbalanceados\n", linea);
+                return NULL;
+            }
+            c1[0] = cadena[i];
+        }
+        else if(cadena[i] == ')')
+        {
+            if(c2[0] != '\0')
+            {
+                debug("\nError en linea %d: Parentesis desbalanceados\n", linea);
+                return NULL;
+            }
+            c2[0] = cadena[i];
+        }
+        else if(!isalpha(cadena[i]) && !isdigit(cadena[i]) && cadena[i] != '_' && cadena[i] && cadena[i] != '(' && cadena[i] != ')')
+        {
+            debug("\nError en linea %d: el compilador encontro un intento de definir una variable en un comentario. Sin embargo, el valor %c no es permitido\n", linea, cadena[i]);
+            return NULL;
+        }
         else
+        {
+            if(chars == 0 && espacios == 0)
+                chars++;
+            else if(espacios == 1)
+            {
+                debug("\nError en linea %d: el compilador encontro un intento de definir free en un comentario. Sin embargo, free no debe contener espacios\n", linea);
+                return NULL;
+            }
             temp[indice++] = cadena[i];
+        }
     }
 
-    if(strcmp(temp, "char") == 0)
+    uint16_t formato = strlen(temp)+strlen("free\n=NULL;");
+    uint8_t * retorna = malloc(formato+1+strlen(c1)+1+strlen(c2)+1+strlen(temp)+1+1+1);
+    if(retorna == NULL)
     {
-        if(definir == NULL)
-            init_definir(size);
-        if(!comentario_parser(cadena, i, CHAR))
+        debug("\nError: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+
+    uint8_t token = ht_get(temp);
+    uint8_t token_comentario = var_get(temp);
+    if(temp[0] == '\0')
+    {
+        debug("\nError en linea %d: falta parametro en \"free\"\n", linea);
+        return NULL;
+    }
+    else if(token == 0)
+    {
+        debug("\nError en linea %d: la variable no existe: %s\n", linea, temp);
+        return NULL;
+    }
+    else if(token != CADENA || token_comentario == CHAR)
+    {
+        debug("\nError en linea %d: la variable no es un puntero: %s\n", linea, temp);
+        return NULL;
+    }
+
+    if(!free_libera(temp, 0))
+        return NULL;
+    
+    sprintf(retorna, "free%s%s%s;\n%s=NULL;",c1,temp,c2,temp);
+
+    return retorna;
+}
+
+uint8_t verificar_comentario(uint8_t * cadena,uint32_t size)
+{
+    if(datos->token == CHAR)
+    {
+        if(!comentario_parser(cadena, datos->index, CHAR))
             return 0;
     }
-    else if(strcmp(temp, "float") == 0)
+    else if(datos->token == FLOAT)
     {
-        if(definir == NULL)
-            init_definir(size);
-        if(!comentario_parser(cadena, i, FLOAT))
+        if(!comentario_parser(cadena, datos->index, FLOAT))
             return 0;
     }
 
