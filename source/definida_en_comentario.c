@@ -225,7 +225,7 @@ void print_raw_input(FILE * archivo)
     fprintf(archivo, "%*s\n", strlen("free(get_input);")+4, "free(get_input);");
     fprintf(archivo, "%*s\n", strlen("return numero;")+4, "return numero;");
     fprintf(archivo, "}\n");
-    fprintf(archivo, "%*s\n", strlen("int raw_input_float(char * input)"), "int raw_input_float(char * input)");
+    fprintf(archivo, "%*s\n", strlen("float raw_input_float(char * input)"), "float raw_input_float(char * input)");
     fprintf(archivo, "{\n");
     fprintf(archivo, "%*s\n", strlen("char * get_input = raw_input(input);")+4, "char * get_input = raw_input(input);");
     fprintf(archivo, "%*s\n", strlen("float numero = atof(get_input);")+4, "float numero = atof(get_input);");
