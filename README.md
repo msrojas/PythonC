@@ -19,7 +19,7 @@ To translate the code efficiently, you will have to see the documentation: <a hr
 
 <h3>Compilar/Compile</h3>
 Para compilar solo ejecuta el makefile que viene dentro de la carpeta source: make compilador<br>
-To compile just execute the makefile. You will find it in the directory source: make compilador<br>
+To compile just execute the makefile. You will find it in the directory source: make compilador<br><br>
 Dentro de la carpeta source hay otra carpeta llamada "include". Dicho directorio contines los archvios necesarios para compilar los archivos ".c" generados. Dentro de la carpeta viene las instrucciones para compilarlos.<br>
 Inside of the directory source there is another directory called "include". In that directory you will find the files necessary to compile the files ".c" generates.
 <br>
