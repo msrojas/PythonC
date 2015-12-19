@@ -138,6 +138,7 @@ symbol_table_sizes * get_size_file(FILE * archivo_output)
 
 uint8_t informacion_basica(FILE * archivo_output, FILE * archivo)
 {
+    print_como_compilar(archivo_output);
     fprintf(archivo_output, "#include <stdio.h>\n");
     fprintf(archivo_output, "#include <stdlib.h>\n");
     fprintf(archivo_output, "#include <string.h>\n");
