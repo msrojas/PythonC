@@ -57,6 +57,7 @@ var_elemento * var_iterate(var_it * iterator);
 uint8_t * var_iterate_keys(var_it * iterator);
 void var_clear(int free_data);
 void var_destroy();
+void print_como_compilar(FILE * archivo);
 void print_strchar(FILE * archivo);
 uint8_t Es_Operador(uint8_t valor);
 uint8_t verificar_funciones(uint8_t * cadena, FILE * archivo_output);
