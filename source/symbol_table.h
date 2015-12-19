@@ -9,7 +9,7 @@ typedef struct hash_elem_t
 	uint8_t * var_name;
 	uint8_t token;
 	uint8_t token_function;
-	uint8_t * value; 
+	uint8_t * value; //NUEVO
 }hash_elem_t;
 
 typedef struct hashtable_t
@@ -44,6 +44,6 @@ uint16_t get_len_value(lexical * lexer, uint8_t size);
 uint8_t * agregar_valor(lexical * lexer, uint8_t size);
 uint8_t update_valor(uint8_t * key, uint8_t * value);
 uint8_t update_token_function(uint8_t * key, uint8_t token_function);
-
+uint8_t get_token_function(uint8_t * key);
 
 #endif
