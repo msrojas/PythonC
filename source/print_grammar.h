@@ -23,6 +23,10 @@
 
 #include "compilador.h"
 
+uint8_t is_corchetes(lexical * lexer);
+uint8_t * get_list_indice(lexical * lexer, uint8_t size);
+uint8_t is_only_list(lexical * lexer, uint8_t size);
+uint8_t check_variable_for(lexical * lexer, uint8_t size);
 uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size);
 uint8_t check_sub_indices(lexical * lexer, uint8_t size);
 uint8_t StrCat(lexical * lexer, uint8_t * temp);
@@ -30,7 +34,7 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador);
 uint8_t buscar_float(lexical * lexer, uint8_t index, uint8_t size);
 void check_float(uint8_t size, lexical * lexer);
 uint8_t check_concatenacion(lexical * lexer, uint8_t size);
-short get_len_numbers(lexical * lexer, uint8_t size);
+uint16_t get_len_numbers(lexical * lexer, uint8_t size);
 uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos);
 data * check_print_grammar(lexical * lexer, uint8_t size);
 	
