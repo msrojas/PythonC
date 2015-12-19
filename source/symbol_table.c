@@ -412,13 +412,31 @@ uint8_t update_token_function(uint8_t * key, uint8_t token_function)
     {
         if(strcmp(e->var_name, key) == 0)
         {
-        	if(e->token_function != RAW_INPUT)
-        	    e->token_function = RAW_INPUT;
+            if(e->token_function != token_function)
+                e->token_function = token_function;
             return 1;
         }
 
         e = e->next;
     }
     debug("\nError: bug en funcion: update_token_function\n");
+    return 0;
+}
+
+uint8_t get_token_function(uint8_t * key)
+{
+    uint32_t h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0)
+        {            
+            return e->token_function;
+        }
+
+        e = e->next;
+    }
+
     return 0;
 }
