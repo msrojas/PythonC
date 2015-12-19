@@ -176,6 +176,17 @@ void var_destroy()
 	free(definir);
 }
 
+void print_como_compilar(FILE * archivo)
+{
+    fprintf(archivo, "/*\n");
+    fprintf(archivo, "%*s\n", strlen("Si no usas te la funcion raw_input ni tampoco las listas")+4, "Si no usas te la funcion raw_input ni tampoco las listas");
+    fprintf(archivo, "%*s\n\n", strlen("entonces simplemente compila de forma normal: gcc ejemplo.c -o ejemplo")+4, "entonces simplemente compila de forma normal: gcc ejemplo.c -o ejemplo");
+    fprintf(archivo, "%*s\n\n", strlen("Si usas te raw_input: gcc ejemplo.c -o ejemplo -Linclude -lraw_input")+4, "Si usas te raw_input: gcc ejemplo.c -o ejemplo -Linclude -lraw_input");
+    fprintf(archivo, "%*s\n\n", strlen("Si usas te las listas: gcc ejemplo.c -o ejemplo -Linclude -llist")+4, "Si usas te las listas: gcc ejemplo.c -o ejemplo -Linclude -llist");
+    fprintf(archivo, "%*s\n", strlen("Si usas te las dos: gcc ejemplo.c -o ejemplo -Linclude -llist -lraw_input")+4, "Si usas te las dos: gcc ejemplo.c -o ejemplo -Linclude -llist -lraw_input");
+    fprintf(archivo, "*/\n");
+}
+
 void print_strchar(FILE * archivo) //NUEVO
 {
     fprintf(archivo, "void strchar(char * str, char c)\n");
