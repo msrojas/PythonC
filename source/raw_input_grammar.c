@@ -62,7 +62,7 @@ uint8_t * print_original_input(lexical * lexer, uint8_t size, uint8_t token)
                     return NULL;
                 }
             
-                uint8_t ret_val = free_put(temp_cadena, 1); //NUEVO
+                uint8_t ret_val = free_put(temp_cadena, 1,CADENA); 
                 if(ret_val == 0 || ret_val == 2)
                 { 
                     free(retorno);
