@@ -109,7 +109,7 @@ uint8_t check_quotes(uint8_t * token, lexical ** lexer, uint8_t i);
 uint8_t get_token_number(uint8_t * token, lexical ** lexer, uint8_t i);
 uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i);
 uint8_t check_indentacion(uint16_t espacios);
-int len_sin_espacios(uint8_t * cadena);
+uint32_t len_sin_espacios(uint8_t * cadena);
 uint8_t get_index_indent(uint16_t espacios);
 uint8_t get_formato_indent(uint8_t indent);
 output_code * parser(uint8_t * cadena);
