@@ -77,6 +77,7 @@ typedef struct datos_comentarios
 #include "definida_en_comentario.h"
 #include "raw_input_grammar.h"
 #include "if_grammar.h"
+#include "for_grammar.h"
 
 extern uint32_t linea;
 extern uint8_t fixed_width;
