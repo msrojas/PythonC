@@ -51,6 +51,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
         len_valor = strlen(lexer->valor) + 1;
         datos->numero_de_cadenas++;
     }
+    else if(ret_token == L_CORCHETES)
+        ret_token = LIST;
 
     for(i=0;i<size;i++)
     {
@@ -75,7 +77,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                 return NULL;
             }
             datos->declarada = 1;
-            ret_token = token;
+            if(ret_token != LIST)
+                ret_token = token;
         }
         else if(lexer->token == VARIABLE && i == cuenta_lparentesis && ret_token == L_PARENTESIS)
         {
@@ -92,7 +95,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                 free(datos);
                 return NULL;
             }
-            ret_token = token;
+            if(ret_token != LIST)
+                ret_token = token;
         }
 
         else if(lexer->token == NUMERO && last_token != 0)
@@ -143,7 +147,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
             }
             else if(operacion == 1)
             {
-                ret_token = FLOAT;
+            	if(ret_token != LIST)
+                    ret_token = FLOAT;
             }
         }
 	
@@ -162,7 +167,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     ope_de_parentesis = 1;
                 }
             }
-            if(ret_token != FLOAT)
+            if(ret_token != FLOAT && ret_token != LIST)
                 ret_token = NUMERO;
             temp_token = INT;
         }	
@@ -181,7 +186,8 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     ope_de_parentesis = 1;
                 }
             }
-            ret_token = FLOAT;
+            if(ret_token != LIST)
+                ret_token = FLOAT;
             temp_token = FLOAT_F;
         }
         else if(lexer->token == LEN && (last_token != 0 || last_token == 0))
@@ -199,7 +205,7 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     ope_de_parentesis = 1;
                 }
             }
-            if(ret_token != FLOAT)
+            if(ret_token != FLOAT && ret_token != LIST)
                 ret_token = NUMERO;
             temp_token = LEN;
         }
