@@ -1,0 +1,11 @@
+ESTOS FICHEROS SIRVEN PARA COMPILAR LOS ARCHIVOS ".c" GENERADOS
+
+LINUX:
+gcc -c list.c -o list.o
+ar rcs liblist.a list.o
+
+gcc -c raw_input.c -o raw_input.o
+ar rcs libraw_input.a raw_input.o
+
+WINDOWS:
+No lo se. No uso dicho SO
