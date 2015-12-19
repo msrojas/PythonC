@@ -68,7 +68,7 @@ uint8_t free_libera(uint8_t * key,uint8_t liberar)
     return 0;
 }
 
-uint8_t free_put(uint8_t * key, uint8_t liberar)
+uint8_t free_put(uint8_t * key, uint8_t liberar, uint8_t token)
 {
 	uint32_t h = free_calc_hash(key) % free_hash->size;
 	free_elem_t * e = free_hash->table[h];
@@ -99,6 +99,7 @@ uint8_t free_put(uint8_t * key, uint8_t liberar)
 
 	strcpy(e->var_name, key);
 	e->liberada = liberar;
+	e->token = token;
 
 	e->next = free_hash->table[h];
 	free_hash->table[h] = e;
@@ -199,16 +200,22 @@ void free_destroy()
 void free_vars_compile(FILE * archivo)
 {
 	uint8_t i=0;
-	uint8_t temp[100];
+	uint8_t temp[150];
 	memset(temp, 0, sizeof(temp));
 
 	free_elem_it it = FREE_ITERATOR(free_hash);
 	free_elem_t * e = free_iterate(&it);
 	while(e != NULL)
 	{
+		if(e->token == LIST && e->liberada == 1)
+		{
+		    sprintf(temp, "destroy_list(%s->next);", e->var_name);
+		    fprintf(archivo, "%*s\n", strlen(temp)+4,temp);
+		    memset(temp, 0, sizeof(temp));
+		}
 		if(e->liberada == 1)
 		{
-                    sprintf(temp, "free(%s);", e->var_name);
+            	    sprintf(temp, "free(%s);", e->var_name);
 		    fprintf(archivo, "%*s\n", strlen(temp)+4,temp);
 		    memset(temp, 0, sizeof(temp));
 		}
