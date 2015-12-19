@@ -40,8 +40,8 @@ Memory leak corregido en raw_input<br>
 Memory leak corregido en run_compiler.c (otro mas)<br>
 Error corregido al definir variables<br>
 Error corregido al concatenar variables (otro mas)<br>
-Error corregido en print_grammar.c
-Error corregido en run_compiler.c <br>
+Error corregido en print_grammar.c<br>
+Error corregido en run_compiler.c 
 <br>
 <br>
 Si llegas a encontrar un bug o quieres aportar, favor de comunicarte en cualquiera de las dos direcciones:
