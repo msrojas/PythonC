@@ -28,6 +28,7 @@ typedef struct free_elem_t
     struct free_elem_t * next;
     uint8_t * var_name;
     uint8_t liberada;
+    uint8_t token;
 }free_elem_t;
 
 typedef struct free_table_t
@@ -50,7 +51,7 @@ extern free_table_t * free_hash;
 free_table_t * free_create(uint32_t size);
 uint32_t free_calc_hash(uint8_t * key);
 uint8_t free_libera(uint8_t * key,uint8_t liberar);
-uint8_t free_put(uint8_t * key, uint8_t token);
+uint8_t free_put(uint8_t * key, uint8_t liberar,uint8_t token);
 void * free_remove(uint8_t * key);
 uint8_t free_get(uint8_t * key);
 free_elem_t * free_iterate(free_elem_it * iterator);
