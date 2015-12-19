@@ -187,54 +187,6 @@ void print_strchar(FILE * archivo) //NUEVO
     fprintf(archivo, "}\n");
 }
 
-void print_raw_input(FILE * archivo)
-{
-    fprintf(archivo, "%*s\n", strlen("char * raw_input(char * input)"), "char * raw_input(char * input)");
-    fprintf(archivo, "{\n");
-    fprintf(archivo, "%*s\n", strlen("char c;")+4,"char c;");
-    fprintf(archivo, "%*s\n", strlen("printf(\"%s\", input);")+4, "printf(\"%s\", input);");
-    fprintf(archivo, "%*s\n", strlen("short size = 100;")+4, "short size = 100;");
-    fprintf(archivo, "%*s\n", strlen("short indice = 0;")+4, "short indice = 0;");
-    fprintf(archivo, "%*s\n", strlen("char * get_input = (char *)malloc(size);")+4, "char * get_input = (char *)malloc(size);");
-    fprintf(archivo, "%*s\n", strlen("if(get_input == NULL)")+4, "if(get_input == NULL)");
-    fprintf(archivo, "%*s\n", strlen("{")+4, "{");
-    fprintf(archivo, "%*s\n", strlen("printf(\"Error: ocurrio un inconveniente en la heap\\n\");")+8, "printf(\"Error: ocurrio un inconveniente en la heap\\n\");");
-    fprintf(archivo, "%*s\n", strlen("exit(1);")+8, "exit(1);");  
-    fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");    
-    fprintf(archivo, "%*s\n", strlen("while((c = getchar()) != EOF && c != \'\n\')")+4, "while((c = getchar()) != EOF && c != \'\\n\')");   
-    fprintf(archivo, "%*s\n", strlen("{")+4, "{");
-    fprintf(archivo, "%*s\n", strlen("if(indice >= size )")+8, "if(indice >= size )");
-    fprintf(archivo, "%*s\n", strlen("{")+8, "{");
-    fprintf(archivo, "%*s\n", strlen("size += 50;")+12, "size += 50;");
-    fprintf(archivo, "%*s\n", strlen("get_input = (char *)realloc(get_input, size);")+12, "get_input = (char *)realloc(get_input, size);");
-    fprintf(archivo, "%*s\n", strlen("if(get_input == NULL)")+12, "if(get_input == NULL)");
-    fprintf(archivo, "%*s\n", strlen("{")+12, "{");
-    fprintf(archivo, "%*s\n", strlen("printf(\"Error: ocurrio un inconveniente en la heap\\n\");")+16, "printf(\"Error: ocurrio un inconveniente en la heap\\n\");");
-    fprintf(archivo, "%*s\n", strlen("exit(1);")+16, "exit(1);");
-    fprintf(archivo, "%*s\n", strlen("}")+12, "}");
-    fprintf(archivo, "%*s\n", strlen("}")+8, "}");
-    fprintf(archivo, "%*s\n", strlen("get_input[indice++] = c;")+8, "get_input[indice++] = c;");
-    fprintf(archivo, "%*s\n\n", strlen("}")+4, "}");
-    fprintf(archivo, "%*s\n", strlen("get_input[indice] = \'\\0\';")+4, "get_input[indice] = \'\\0\';");
-    fprintf(archivo, "%*s\n", strlen("return get_input;")+4, "return get_input;");
-    fprintf(archivo, "}\n");
-    fprintf(archivo, "%*s\n", strlen("int raw_input_int(char * input)"), "int raw_input_int(char * input)");
-    fprintf(archivo, "{\n");
-    fprintf(archivo, "%*s\n", strlen("char * get_input = raw_input(input);")+4, "char * get_input = raw_input(input);");
-    fprintf(archivo, "%*s\n", strlen("int numero = atoi(get_input);")+4, "int numero = atoi(get_input);");
-    fprintf(archivo, "%*s\n", strlen("free(get_input);")+4, "free(get_input);");
-    fprintf(archivo, "%*s\n", strlen("return numero;")+4, "return numero;");
-    fprintf(archivo, "}\n");
-    fprintf(archivo, "%*s\n", strlen("float raw_input_float(char * input)"), "float raw_input_float(char * input)");
-    fprintf(archivo, "{\n");
-    fprintf(archivo, "%*s\n", strlen("char * get_input = raw_input(input);")+4, "char * get_input = raw_input(input);");
-    fprintf(archivo, "%*s\n", strlen("float numero = atof(get_input);")+4, "float numero = atof(get_input);");
-    fprintf(archivo, "%*s\n", strlen("free(get_input);")+4, "free(get_input);");
-    fprintf(archivo, "%*s\n", strlen("return numero;")+4, "return numero;");
-    fprintf(archivo, "}\n");
-
-}
-
 uint8_t Es_Operador(uint8_t valor)
 {
 	uint8_t i=0;
@@ -252,7 +204,7 @@ uint8_t Es_Operador(uint8_t valor)
 	return retorno;
 }
 
-uint8_t verificar_raw_input(uint8_t * cadena, FILE * archivo_output)
+uint8_t verificar_funciones(uint8_t * cadena, FILE * archivo_output)
 {
     uint16_t len = strlen(cadena);
     uint8_t temp[len+1];
@@ -275,9 +227,9 @@ uint8_t verificar_raw_input(uint8_t * cadena, FILE * archivo_output)
                 chars++;
             else if(chars == 1 && espacios == 1)
             {
-                if(strcmp(temp, "raw_input") == 0)
+                if(strcmp(temp, "raw_input") == 0 || strcmp(temp, "list") == 0)
                 {
-                    debug("\nError: la definicion de #raw_input no debe llevar variables\n", linea);
+                    debug("\nError: la definicion de funciones no debe llevar variables\n", linea);
                     return 0;
                 }
                 else
@@ -293,15 +245,28 @@ uint8_t verificar_raw_input(uint8_t * cadena, FILE * archivo_output)
         id = var_get(temp);
         if(id != 0)
         {
-            debug("\nAviso: has repetido la declaracion #raw_input mas de una vez, por lo cual se ha omitido. No causa conflictos, pero se recomienda que se elimine\n", linea);
+            debug("\nAviso en liea %d: has repetido la declaracion #raw_input mas de una vez, por lo cual se ha omitido. No causa conflictos, pero se recomienda que se elimine\n", linea);
         }
         else
         {   
             id = var_put(temp, RAW_INPUT);
             if(id == 0 || id == 2)
                 return 0;
-            print_raw_input(archivo_output);
+            fprintf(archivo_output, "#include \"include/raw_input.h\"\n");
         }    
+    }
+    else if(strcmp(temp, "list") == 0)
+    {
+        id = var_get(temp);
+        if(id != 0)
+            debug("\nAviso en linea %d: has repetido la declaracion #list mas de una vez, por lo cual se ha omitido. No causa conflictos, pero se recomienda que se elimine\n", linea);
+        else
+        {
+            id = var_put(temp, LIST);
+            if(id == 0 || id == 2)
+                return 0;
+            fprintf(archivo_output, "#include \"include/list.h\"\n");
+        }
     }
 
     return 1;
@@ -321,7 +286,7 @@ uint8_t buscar_funciones(FILE * archivo, FILE * archivo_output)
             temp[len-1] = '\0';
         if(temp[0] == '#')
         {
-            if(!verificar_raw_input(temp, archivo_output))
+            if(!verificar_funciones(temp, archivo_output))
                 return 0;
         }
 
@@ -463,7 +428,8 @@ uint8_t * comentario_free(uint8_t * cadena, uint16_t index) //NUEVO
     }
 
     uint16_t formato = strlen(temp)+strlen("free\n=NULL;");
-    uint8_t * retorna = malloc(formato+1+strlen(c1)+1+strlen(c2)+1+strlen(temp)+1+1+1);
+    uint16_t len_formato = formato+1+strlen(c1)+1+strlen(c2)+1+strlen(temp)+1+1+1;
+    uint8_t * retorna = malloc(len_formato);
     if(retorna == NULL)
     {
         debug("\nError: ocurrio un inconveniente en la heap\n");
@@ -482,7 +448,7 @@ uint8_t * comentario_free(uint8_t * cadena, uint16_t index) //NUEVO
         debug("\nError en linea %d: la variable no existe: %s\n", linea, temp);
         return NULL;
     }
-    else if(token != CADENA || token_comentario == CHAR)
+    else if((token != CADENA && token != LIST) || token_comentario == CHAR)
     {
         debug("\nError en linea %d: la variable no es un puntero: %s\n", linea, temp);
         return NULL;
@@ -490,8 +456,19 @@ uint8_t * comentario_free(uint8_t * cadena, uint16_t index) //NUEVO
 
     if(!free_libera(temp, 0))
         return NULL;
-    
-    sprintf(retorna, "free%s%s%s;\n%s=NULL;",c1,temp,c2,temp);
+
+    if(token == LIST)
+    {
+        retorna = realloc(retorna, len_formato+strlen("destroy_list(->next);")+1);
+        if(retorna == NULL)
+        {
+            debug("\nError: ocurrio un inconveniente en la heap\n");
+            return NULL;
+        }
+        sprintf(retorna, "destroy_list(%s->next);\nfree%s%s%s;\n%s=NULL;",temp,c1,temp,c2,temp);
+    }
+    else
+        sprintf(retorna, "free%s%s%s;\n%s=NULL;",c1,temp,c2,temp);
 
     return retorna;
 }
