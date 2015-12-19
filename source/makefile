@@ -1,5 +1,5 @@
-compilador:libcomp.a libvari.a libprint.a libsintax.a libsymbol.a libfree.a libdefinida.a libraw.a libif.a
-	gcc run_compiler.c -o compilador -I. libcomp.a -I. libvari.a -I. libprint.a -I. libsintax.a -I. -I. libsymbol.a -I. libfree.a -I. libdefinida.a -I. libraw.a -I. libif.a
+compilador:libcomp.a libvari.a libprint.a libsintax.a libsymbol.a libfree.a libdefinida.a libraw.a libif.a libfor.a
+	gcc run_compiler.c -o compilador -I. libcomp.a -I. libvari.a -I. libprint.a -I. libsintax.a -I. -I. libsymbol.a -I. libfree.a -I. libdefinida.a -I. libraw.a -I. libif.a -I. libfor.a
 
 libcomp.a:compilador.c
 	gcc -c compilador.c -o compilador.o
@@ -37,5 +37,9 @@ libif.a:if_grammar.c
 	gcc -c if_grammar.c -o if_grammar.o
 	ar rcs libif.a if_grammar.o
 
+libfor.a:for_grammar.c
+	gcc -c for_grammar.c -o for_grammar.o
+	ar rcs libfor.a for_grammar.o
+
 clean:
-	rm 	compilador.o variable_grammar.o print_grammar.o sintaxis_basica.o symbol_table.o free_lib.o definida_en_comentario.o raw_input_grammar.o if_grammar.o				
+	rm 	compilador.o variable_grammar.o print_grammar.o sintaxis_basica.o symbol_table.o free_lib.o definida_en_comentario.o raw_input_grammar.o if_grammar.o for_grammar.o				
