@@ -23,22 +23,25 @@
 
 #include "compilador.h"
 
-uint8_t * get_name(lexical * lexer, uint8_t size, uint8_t * var_name); 
+uint8_t * get_name(lexical * lexer, uint8_t size, uint8_t * var_name); //NUEVO
 uint8_t * get_char_indice(lexical * lexer);
 uint16_t get_len_indice(lexical * lexer);
 uint8_t * get_cpy_indice(lexical * lexer, uint8_t index, uint8_t * var);
 uint8_t * get_cpy_string(uint8_t * valor, uint8_t index, uint8_t * var);
-uint8_t * get_strcpy_string(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value); 
+uint8_t * get_strcpy_string(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value); //NUEVO
 uint8_t * get_string_indice(lexical * lexer, uint8_t index);
 uint8_t * get_string(uint8_t * valor, uint8_t index);
-uint8_t * get_malloc_string(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value);
-uint16_t get_len_strcpy(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value);
-uint16_t get_len_malloc(lexical * lexer, uint8_t size, uint8_t * value, uint8_t * var); 
-uint8_t get_len_concat(lexical * lexer, uint8_t size); 
+uint8_t * get_malloc_string(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value);//NUEVO
+uint16_t get_len_strcpy(lexical * lexer, uint8_t size, uint8_t * var, uint8_t * value);//NUEVO
+uint16_t get_len_malloc(lexical * lexer, uint8_t size, uint8_t * value, uint8_t * var); //NUEVO
+uint8_t get_len_concat(lexical * lexer, uint8_t size); //NUEVO
 uint8_t get_number_of_bytes(uint16_t len);
 void checa_y_modifica(uint8_t * cadena);
 uint16_t get_bytes(lexical * lexer, uint8_t size);
 uint16_t get_funciones_extras(lexical * lexer, uint8_t size);
+uint16_t get_len_parametros(lexical * lexer, uint8_t size);
+uint8_t get_numero_elemento(lexical * lexer, uint8_t size);
+uint8_t * add_elemento(lexical * lexer);
 uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, uint8_t size);
 uint8_t check_int_o_float(lexical * lexer, uint8_t size);
 data * check_variable_grammar(lexical * lexer, uint8_t size);
