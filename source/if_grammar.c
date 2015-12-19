@@ -190,7 +190,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                 }
                 else if(token == CADENA && expresion2 == CADENA)
                 {
-                	if(!verificar_strings(operador1, operador2))
+                    if(!verificar_strings(operador1, operador2))
                     {
                     	free(valor_exp1);
                     	free(valor_exp2);
@@ -217,7 +217,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                 }
                 else if(token == CADENA && expresion1 == CADENA)
                 {
-                	if(!verificar_strings(operador1, operador2))
+                    if(!verificar_strings(operador1, operador2))
                     {
                     	free(valor_exp1);
                     	free(valor_exp2);
@@ -229,8 +229,8 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
             {
                 if(!verificar_strings(operador1, operador2))
                 {
-                    free(valor_exp1);
-                    free(valor_exp2);
+                	free(valor_exp1);
+                	free(valor_exp2);
                     return 0;
                 }
             }
@@ -254,7 +254,7 @@ uint8_t verificar_expresion(lexical * lexer, uint8_t size)
                 }
                 else if(token1 == CADENA && token2 == CADENA)
                 {
-                	if(!verificar_strings(operador1, operador2))
+                    if(!verificar_strings(operador1, operador2))
                     {
                     	free(valor_exp1);
                     	free(valor_exp2);
@@ -318,6 +318,7 @@ uint8_t * print_original_else(lexical * lexer, uint8_t size)
         return NULL;
     }
 
+
     return strcpy(retorna, temp);
 }
 
@@ -331,18 +332,18 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
     uint8_t formato = 0;
     uint16_t len = get_len_numbers(lexer, size);
     formato = strlen("(\n");
-    if(lexer->token == ELIF)
+    if(lexer->token == ELIF) //NUEVO
         formato += 3;
     uint16_t len_strcmp = buscar_string_comparation(lexer, size);
     if(len > 0)
-       formato += len_strcmp;
+       formato += len_strcmp;	
     uint8_t temp[formato+len+1]; 
     uint8_t parentesis = busca_parentesis(lexer, size);
     memset(temp, 0, sizeof(temp));
 
-    str_cat(temp, lexer->valor, lexer->token); 
+    str_cat(temp, lexer->valor, lexer->token); //NUEVO
     strcat(temp, "(");
-    
+
     lexer = lexer->next;
    	size -= 1;
 
@@ -360,7 +361,7 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
             strcat(temp, "atof");
         else if(lexer->token == DOS_PUNTOS)
             strcat(temp, ")");
-        else if(lexer->token == AND)
+        else if(lexer->token == AND) 
             strcat(temp, "&&");
         else if(lexer->token == OR)
             strcat(temp, "||");
@@ -397,7 +398,7 @@ uint8_t * print_original_if(lexical * lexer, uint8_t size)
                 token_t1 = 0;
                 token_t2 = 0;        
             }
-        }        
+        } 
         else
         {
             strcat(temp, lexer->valor);
@@ -445,7 +446,7 @@ uint8_t check_if_grammar(lexical * lexer, uint8_t size)
     uint8_t token = 0;
     for(i=0;i<size;i++)
     {
-        if((lexer->token == MAYOR_QUE || lexer->token == MENOR_QUE || lexer->token == R_PARENTESIS || lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION || lexer->token == PLUS_CONCAT || lexer->token == DOS_PUNTOS || lexer->token == DISTINTO) && last_token == 0)
+        if((lexer->token == MAYOR_QUE || lexer->token == MENOR_QUE || lexer->token == R_PARENTESIS || lexer->token == OPERADOR || lexer->token == IGUAL || lexer->token == CONCATENACION || lexer->token == PLUS_CONCAT || lexer->token == DOS_PUNTOS || lexer->token == DISTINTO || es_logico(lexer->token)) && last_token == 0)
         {
             if(lexer->token != NOT)
             {
