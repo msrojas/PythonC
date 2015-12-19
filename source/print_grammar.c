@@ -20,7 +20,137 @@
 */    
 #include "print_grammar.h"
 
-uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size) 
+uint8_t is_corchetes(lexical * lexer)
+{
+    lexer = lexer->next;
+    if(lexer->token == L_CORCHETES)
+        return 0;
+    else
+        return 1;
+}    
+
+uint8_t * get_list_indice(lexical * lexer, uint8_t size)
+{
+    lexer = lexer->next;
+    lexer = lexer->next;
+    uint8_t * indice = NULL;
+    if(lexer->token == NUMERO)
+    {
+        indice = malloc(strlen(lexer->valor)+1);
+        if(indice == NULL)
+        {
+            debug("\nError: ocurrio un inconveniente en la heap\n");
+            return NULL;
+        }
+        strcpy(indice, lexer->valor);
+    }
+    else if(lexer->token == VARIABLE)
+    {
+        uint8_t token = ht_get(lexer->valor);
+        if(token == NUMERO)
+        {
+            indice = malloc(strlen(lexer->valor)+1);
+            if(indice == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            strcpy(indice, lexer->valor);
+        }
+        else
+        {
+            debug("\nError en linea %d: el indice debe ser un valor numerico: %s\n", linea, lexer->valor);
+            return NULL;
+        }
+    }
+    else
+    {
+        debug("\nError en linea %d: el indice debe ser un valor numerico: %s\n", linea, lexer->valor);
+        return NULL;
+    }
+
+    return indice;
+}    
+
+uint8_t is_only_list(lexical * lexer, uint8_t size)
+{
+    uint8_t i=0;
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == NUMERO || lexer->token == FLOAT || lexer->token == CADENA || lexer->token == INT || lexer->token == FLOAT_F || lexer->token == LEN)
+        {
+            debug("\nError en linea %d: lamentablemente las listas en C no funcionan igual que en python. Python es un lenguaje interpretado, por lo tanto, es mas facil destruir variables y reemplazar valores. Pero C es un compilador y un compilador requiere una gramatica estricta\n\nNo puedes concatenar listas con otros valores\n", linea);
+            return 0;
+        }
+        else if(lexer->token == CONCATENACION || lexer->token == PLUS_CONCAT)
+        {
+            debug("\nError en linea %d: lamentablemente las listas en C no funcionan igual que en python. Python es un lenguaje interpretado, por lo tanto, es mas facil destruir variables y reemplazar valores. Pero C es un compilador y un compilador requiere una gramatica estricta\n\nNo puedes concatenar listas con otros valores\n", linea);
+            return 0;
+        }
+        else if(lexer->token == VARIABLE)
+        {
+        	uint8_t token = ht_get(lexer->valor);
+        	uint8_t token_for = get_token_function(lexer->valor);
+        	if(token == LIST && token_for != FOR)
+        	{
+                lexer = lexer->next;
+                if(lexer->token != L_CORCHETES)
+                {
+                    debug("\nError en linea %d: falta \"[\"\n", linea);
+                    return 0;
+                }
+                lexer = lexer->next;
+                lexer = lexer->next;
+                if(lexer->token != R_CORCHETES)
+                {
+                    debug("\nError en linea %d: falta \"]\"\n", linea);
+                    return 0;
+                }
+            }
+            else if(token == LIST && token_for == FOR)
+            {
+            	lexer = lexer->next;
+                if(lexer->token == L_CORCHETES)
+                {
+                    debug("\nError en linea %d: sintaxis invalida: %s\n", linea, lexer->valor);
+                    return 0;
+                }
+            }
+            else
+            {
+                debug("\nError en linea %d: lamentablemente las listas en C no funcionan igual que en python. Python es un lenguaje interpretado, por lo tanto, es mas facil destruir variables y reemplazar valores. Pero C es un compilador y un compilador requiere una gramatica estricta\n\nNo puedes concatenar listas con otros valores\n", linea);
+                return 0;
+            }
+        }
+        lexer = lexer->next;
+    }
+
+    return 1;
+}    
+
+uint8_t check_variable_for(lexical * lexer, uint8_t size)
+{
+    uint8_t len = 0;
+    uint8_t i=0;
+    uint8_t token_for = 0;
+    uint8_t token = 0;
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == VARIABLE)
+        {
+            token = ht_get(lexer->valor);
+            token_for = get_token_function(lexer->valor);
+            if(token == CADENA && token_for == FOR)
+                len += 1;
+        }
+
+        lexer = lexer->next;
+    }
+
+    return len;
+}
+
+uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size) //NUEVO
 {
     uint8_t i=0;
     uint8_t ret = 0;
@@ -85,17 +215,19 @@ uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size)
     return ret;
 }    
 
-uint8_t check_sub_indices(lexical * lexer, uint8_t size) 
+uint8_t check_sub_indices(lexical * lexer, uint8_t size) //NUEVO
 {
     uint8_t i=0;
     uint8_t ret = 0;
     uint8_t token = 0;
+    uint8_t token_for = 0;
     for(i=0;i<size;i++)
     {
         if(lexer->token == VARIABLE)
         {
             token = ht_get(lexer->valor);
-            if(token == CADENA)
+            token_for = get_token_function(lexer->valor);
+            if(token == CADENA && token_for != FOR)
             {
                 ret = buscar_corchetes(lexer,i,size);
                 if(ret == 1)
@@ -113,6 +245,7 @@ uint8_t check_sub_indices(lexical * lexer, uint8_t size)
 uint8_t StrCat(lexical * lexer, uint8_t * temp)
 {
     uint8_t token = 0;
+    uint8_t token_for = 0;
     if(lexer->token == NUMERO || lexer->token == INT)
         strcat(temp, "%d");
     else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
@@ -122,16 +255,19 @@ uint8_t StrCat(lexical * lexer, uint8_t * temp)
     else if(lexer->token == FLOAT)
         strcat(temp, "%f");
     else if(lexer->token == CHAR_CORCHETES)
-        strcat(temp, "%c");    
+        strcat(temp, "%c");
     else if(lexer->token == VARIABLE)
     {
         token = ht_get(lexer->valor);
+        token_for = get_token_function(lexer->valor);
         if(token == NUMERO)
             strcat(temp, "%d");
         else if(token == FLOAT)
             strcat(temp, "%f");
-        else if(token == CADENA)
+        else if(token == CADENA && token_for != FOR)
             strcat(temp, "%s");
+        else if(token == CADENA && token_for == FOR)
+            strcat(temp, "%c");
         else if(token == FLOAT)
             strcat(temp, "%f");
     }
@@ -143,6 +279,7 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
     short formato = strlen("printf(\"%x\\n\",);")+(contador+contador)+1;
     uint8_t temp[formato];
     uint8_t token = 0;
+    uint8_t token_for = 0;
     uint8_t last_token = 0;
     uint8_t parentesis = 0;
     memset(temp, 0, sizeof(temp));
@@ -167,16 +304,19 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
             else if(lexer->token == CADENA)
                 strcat(temp, "printf(\"%s");
             else if(lexer->token == FLOAT || lexer->token == FLOAT_F)
-                strcat(temp, "printf(\"%f");	
+                strcat(temp, "printf(\"%f");
             else if(lexer->token == CHAR_CORCHETES)
-                strcat(temp, "printf(\"%c");    
+                strcat(temp, "printf(\"%c");    		
             else if(lexer->token == VARIABLE)
             {
                 token = ht_get(lexer->valor);
+                token_for = get_token_function(lexer->valor);
                 if(token == NUMERO)
                     strcat(temp, "printf(\"%d");
-                else if(token == CADENA)
+                else if(token == CADENA && token_for != FOR)
                     strcat(temp, "printf(\"%s");
+                else if(token == CADENA && token_for == FOR)
+                    strcat(temp, "printf(\"%c");    	
                 else if(token == FLOAT)
                     strcat(temp, "printf(\"%f");
                 token = 0;		
@@ -287,17 +427,17 @@ uint8_t check_concatenacion(lexical * lexer, uint8_t size)
     return contador;
 }
 
-short get_len_numbers(lexical * lexer, uint8_t size)
+uint16_t get_len_numbers(lexical * lexer, uint8_t size)
 {
-    uint8_t i = 0;
-    short len = 0;
+	uint8_t i = 0;
+	uint16_t len = 0;
 
     for(i=0;i<size;i++)
     {
         if(lexer->token == LEN)
             len += 3;
-        else if(lexer->token == INT || lexer->token == FLOAT_F)
-            len += 1;    
+        else if(lexer->token == INT || lexer->token == FLOAT_F) //NUEVO
+            len += 1;
         len += strlen(lexer->valor); 
         lexer = lexer->next;
     }
@@ -324,6 +464,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             uint8_t ret = check_sub_indices(lexer, size);
             if(ret == 0)
                 return NULL;
+            uint8_t len_tokens_for = check_variable_for(lexer,size);
             if(datos->declarada == 0 && c_concat == 0)
             {
                 uint8_t ignora_quotes = datos->numero_de_cadenas * 2;
@@ -336,7 +477,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
                 len_cadena = get_len_numbers(lexer, size);
                 len = strlen(string)+3;
             }
-            uint8_t temp[len_cadena+len];
+            uint8_t temp[len_cadena+len+len_tokens_for];
             memset(temp, 0, sizeof(temp));
 
             if(datos->declarada == 0 && c_concat == 0)
@@ -359,6 +500,20 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
                 {
                     if(lexer->token == PLUS_CONCAT)
                         strcat(temp, ",");
+                    else if(lexer->token == VARIABLE)
+                    {
+                        uint8_t token = ht_get(lexer->valor);
+                        uint8_t token_for = get_token_function(lexer->valor);
+                        if(token == CADENA && token_for == FOR)
+                        {
+                            uint8_t temporal[strlen(lexer->valor)+3];
+                            memset(temporal, 0, sizeof(temporal));
+                            sprintf(temporal, "*%s", lexer->valor);
+                            strcat(temp, temporal);
+                        }
+                        else
+                            strcat(temp, lexer->valor);
+                    }
                     else
                     {
                         if(lexer->token == CADENA)
@@ -369,7 +524,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
                 }
                 strcat(temp, ");");
             }
-			//printf("%d : %d\n", strlen(temp), sizeof(temp));
+			//printf("%d : %d : %d\n", strlen(temp), sizeof(temp), linea);
             cadena_retorno = (uint8_t *)malloc(strlen(temp)+1);
             strcpy(cadena_retorno, temp);
             if(datos->declarada == 1 || c_concat == 1)
@@ -386,10 +541,10 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
         { 
             uint16_t len = get_len_numbers(lexer, size);
             c_concat = check_concatenacion(lexer, size);
-            uint16_t formato_len = 0;
             uint8_t ret = check_sub_indices(lexer, size);
             if(ret == 0)
                 return NULL;
+            uint16_t formato_len = 0;
             if(c_concat > 0)
             {
                 check_float(size, lexer);
@@ -398,7 +553,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             }
             else
                 formato_len = strlen("printf(\"%d\\n\",);")+1;
-            uint8_t temp[len+formato_len];
+            uint8_t temp[len+formato_len+1];
             uint8_t check_temp_balanced[len+1];
             memset(temp, 0, sizeof(temp));
             memset(check_temp_balanced, 0, sizeof(check_temp_balanced));
@@ -437,7 +592,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
 
             strcat(temp, check_temp_balanced);
             strcat(temp, ");");
-			//printf("%d : %d\n", strlen(temp), sizeof(temp));
+			//printf("%d : %d : %d\n", strlen(temp), sizeof(temp), linea);
             cadena_retorno = (uint8_t *)malloc(strlen(temp)+1);
             strcpy(cadena_retorno, temp);
             if(c_concat > 0)
@@ -449,10 +604,10 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
         {
             uint16_t len = get_len_numbers(lexer, size);
             c_concat = check_concatenacion(lexer, size);
-            uint16_t formato_len = 0;
             uint8_t ret = check_sub_indices(lexer, size);
             if(ret == 0)
                 return NULL;
+            uint16_t formato_len = 0;
             if(c_concat > 0)
             {
                 check_float(size, lexer);
@@ -461,7 +616,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
             }
             else
                 formato_len = strlen("printf(\"%f\\n\",);")+1;
-
+            
             uint8_t temp[len+formato_len];
             uint8_t check_temp_balanced[len+1];
             memset(temp, 0, sizeof(temp));
@@ -501,11 +656,66 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
 
             strcat(temp, check_temp_balanced);
             strcat(temp, ");");
-			//printf("%d : %d\n", strlen(temp), sizeof(temp));
+			//printf("%d : %d : %d\n", strlen(temp), sizeof(temp), linea);
             cadena_retorno = (uint8_t *)malloc(strlen(temp)+1);
             strcpy(cadena_retorno, temp);
             if(c_concat > 0)
                 free(string);
+
+            break;
+        }
+        case LIST:
+        {
+           /* uint16_t len = get_len_numbers(lexer, size);
+            c_concat = check_concatenacion(lexer, size);
+            uint8_t ret = check_sub_indices(lexer, size);
+            if(ret == 0)
+                return NULL;
+            uint16_t formato_len = 0;
+            if(c_concat > 0)
+            {
+                check_float(size, lexer);
+                string = get_formato(size,lexer, c_concat);	
+                formato_len = strlen(string)+3;
+            }
+            else
+                formato_len = strlen("print_indice_en_especifico()")+1;*/
+            
+            
+            if(!is_only_list(lexer, size))
+                return NULL;
+            uint8_t valida = is_corchetes(lexer);
+            uint16_t len = 0;
+            uint8_t * indice = NULL;     
+            if(valida == 0)
+            {            
+                indice = get_list_indice(lexer, size);
+                len = strlen("print_indice_en_especifico(->next,);")+strlen(lexer->valor)+strlen(indice);
+                uint8_t temp[len+1];
+                memset(temp, 0, sizeof(temp));
+        	}
+        	else
+        	{
+        	    len = strlen("print_indice();")+strlen(lexer->valor);
+        	}
+
+        	uint8_t temp[len+1];
+        	memset(temp, 0, sizeof(temp));
+
+        	if(valida == 0)
+        	    sprintf(temp, "print_indice_en_especifico(%s->next,%s);",lexer->valor, indice);
+        	else
+        	    sprintf(temp, "print_indice(%s);", lexer->valor);
+
+            cadena_retorno = malloc(strlen(temp)+1);
+            if(cadena_retorno == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }    
+            strcpy(cadena_retorno, temp);
+
+            //printf("%d : %d\n", strlen(temp), sizeof(temp));
 
             break;
         } 
