@@ -254,7 +254,7 @@ uint8_t check_sintax_input(lexical * lexer, uint8_t size, uint8_t token_type)
         lexer = lexer->next;
     }
 
-    if(last_token != R_PARENTESIS)
+    if(last_token != R_PARENTESIS) 
     {
     	debug("\nError en linea %d: sintaxis invalida\n", linea);
         return 0;
