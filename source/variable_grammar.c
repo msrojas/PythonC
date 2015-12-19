@@ -145,14 +145,14 @@ uint8_t * get_cpy_string_value(uint8_t * valor, uint8_t index, uint8_t * var)
 		else
 		    temp_value[indice++] = valor[i];
 	}
-    if(index == 0 && validar == 0)
+	if(index == 0 && validar == 0)
         sprintf(temp, "\nstrcpy(%s,%s);", var, temp_value);
     else if(index == 0 && validar == 1)
         sprintf(temp, "%s\nstrcat(%s,%s);", temp, var, temp_value);
     else if(index != 0 && validar == 1)
         sprintf(temp, "%s\nstrcat(%s,%s);", temp,var, temp_value);
-    else if(index != 0 && validar == 0)
-        sprintf(temp, "\nstrcat(%s,%s);", var, temp_value);
+	else if(index != 0 && validar == 0)
+	    sprintf(temp, "\nstrcat(%s,%s);", var, temp_value);
 	//temp[len+1] = '\0';
     return temp;
 
@@ -298,7 +298,7 @@ uint8_t * get_string_value(uint8_t * valor, uint8_t index)
         else
             temp_value[indice++] = valor[i];
 	}
-    if(index == 0 && validar == 0)
+	if(index == 0 && validar == 0)
         sprintf(temp, "strlen(%s)+1", temp_value);
     else if(index == 0 && validar == 1)
     	sprintf(temp, "%s+strlen(%s)+1", temp,temp_value);
@@ -559,10 +559,87 @@ uint16_t get_funciones_extras(lexical * lexer, uint8_t size)
     return len;
 }
 
+uint16_t get_len_parametros(lexical * lexer, uint8_t size) //nuevo
+{
+    uint8_t i=0;
+    uint16_t len = 0;
+    lexer = lexer->next;
+    lexer = lexer->next;
+    lexer = lexer->next;
+    size -= 3;
+
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == NUMERO) 
+            len += 5; //INT y ','
+        else if(lexer->token == CADENA)
+            len += 6; //CHAR y ','
+        else if(lexer->token == FLOAT)
+            len += 7; //FLOAT y ','
+        lexer = lexer->next;
+    }
+
+    return len;
+}
+
+uint8_t get_numero_elemento(lexical * lexer, uint8_t size)
+{
+    uint8_t i=0;
+    uint8_t len = 0;
+    uint8_t last_token = 0;
+    lexer = lexer->next;
+    lexer = lexer->next;
+    lexer = lexer->next;
+    size -= 3;
+
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == CONCATENACION)
+        	len++;
+        last_token = lexer->token;
+        lexer = lexer->next;
+    }
+
+    return (len+1);
+}
+
+uint8_t * add_elemento(lexical * lexer)
+{
+    uint8_t * string = NULL;
+    uint8_t temp[strlen(lexer->valor)+8];
+   // printf("%sa\n", lexer->valor);
+
+    switch(lexer->token)
+    {
+        case NUMERO:
+            sprintf(temp, ",INT,%s", lexer->valor);
+            break;
+        case CADENA:
+            sprintf(temp, ",CHAR,%s",lexer->valor);
+            break;
+        case FLOAT:
+            sprintf(temp, ",FLOAT,%s",lexer->valor);
+            break;
+        default:
+            printf("DESCONOCIDO we\n");
+            break;        
+    }
+
+    string = malloc(strlen(temp)+1);
+    if(string == NULL)
+    {
+        debug("\nError: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+    strcpy(string, temp);
+
+    return string;
+}
+
 uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, uint8_t size)
 {
     uint8_t * cadena_retorno = NULL;
-    uint8_t len_type = 0;
+    uint16_t len_type = 0;
     uint8_t i = 0;
     uint8_t token = ht_get(lexer->valor);
     uint8_t len_var = strlen(lexer->valor);
@@ -691,7 +768,7 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 
                 if(token == 0) //NUEVO
                 { 
-                	uint8_t ret_val = free_put(temp_cadena, 1);
+                	uint8_t ret_val = free_put(temp_cadena, 1, CADENA);
                     if(ret_val == 0 || ret_val == 2)
 					{
 						free(malloc_string);
@@ -837,6 +914,18 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 					return NULL;
 				}
             }
+            else if(token != 0)
+            {
+                uint8_t token_function = get_token_function(temp_cadena);
+                if(token_function == FOR)
+                {
+                    if(!update_token_function(temp_cadena,ZERO))
+                    {
+                        free(cadena_retorno);
+                        return NULL;
+                    }
+                }	
+            }
 
 			//printf("%d : %d : %d\n", strlen(temp), sizeof(temp), linea);
             break;
@@ -907,7 +996,94 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             }	
 			//printf("%d : %d : %d\n", strlen(temp), sizeof(temp), linea);
             break;
-        }	
+        }
+        case LIST:
+        {
+            uint8_t token_comentario = var_get(lexer->valor);
+            uint8_t token_var = ht_get(lexer->valor);
+            if(token_comentario != 0)
+            {
+                debug("\nError en linea %d: la variable fue declarada en un comentario como char o float\n",linea);
+                return NULL;
+            }
+            uint16_t len_extra = get_len_parametros(lexer, size);
+            uint16_t numero_elemento = get_numero_elemento(lexer, size);
+            uint8_t bytes = get_number_of_bytes(numero_elemento)+1; 
+            uint16_t formato_init = strlen("struct list * =init_list();\n")+len_var;
+            if(token_var == 0)
+            	len_type = formato_init+strlen("agregar_elementos();")+len_var+bytes+len_extra+1;
+            else
+            {
+                debug("\nError en linea %d: la lista ya fue declarada. No puedes redefinirla\n", linea);
+                return NULL;
+            }
+
+            uint8_t temp[len_cadena+len_type+1];
+            memset(temp, 0, sizeof(temp));
+
+            sprintf(temp, "struct list * %s=init_list();\nagregar_elementos", lexer->valor);
+            lexer = lexer->next;
+            lexer = lexer->next;
+            if(lexer->token == L_CORCHETES)
+                strcat(temp, "(");
+            else
+            {
+                debug("\nError en linea %d: falta \"[\"\n", linea);
+                return NULL;
+            }
+            strcat(temp, temp_cadena);
+            char string_numero_elemento[bytes+2];
+            sprintf(string_numero_elemento, ",%d", numero_elemento);
+            strcat(temp, string_numero_elemento);
+            lexer = lexer->next;
+
+            size -= 3;
+            uint8_t * string = NULL;
+            uint8_t last_token = 0;
+
+            for(i=0;i<size;i++)
+            {
+                if(lexer->token == R_CORCHETES)
+                    strcat(temp, ")");
+                else
+                {
+                	if((lexer->token == NUMERO || lexer->token == FLOAT || lexer->token == VARIABLE || lexer->token == CADENA) && (last_token == 0 || last_token == CONCATENACION))
+                    { 
+                        string = add_elemento(lexer);
+                        strcat(temp, string);
+                        free(string);
+                        string = NULL;
+                    }
+                }
+                last_token = lexer->token;
+                lexer = lexer->next;
+            }
+            strcat(temp, ";");
+            cadena_retorno = malloc(strlen(temp)+1);
+            if(cadena_retorno == NULL)
+            {
+                debug("\nError: ocurrio un inconveniente en la heap\n");
+                return NULL;
+            }
+            strcpy(cadena_retorno, temp);
+
+            if(token == 0)
+            {
+                if(ht_put(temp_cadena, datos->token, ZERO,NULL) == 2)
+                {
+                    free(cadena_retorno);
+                    return NULL;
+                }
+                uint8_t ret_val = free_put(temp_cadena, 1, LIST);
+                if(ret_val == 0 || ret_val == 2)
+			    {
+				    free(cadena_retorno);
+					return NULL;
+                }
+            }
+
+            break;
+        }    	
         default:
             printf("DESCONOCIDO\n");
             break;	
