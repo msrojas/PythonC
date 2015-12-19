@@ -143,9 +143,9 @@ uint8_t informacion_basica(FILE * archivo_output, FILE * archivo)
     fprintf(archivo_output, "#include <string.h>\n");
     if(fixed_width == 1)
         fprintf(archivo_output, "#include <inttypes.h>\n");
-    print_strchar(archivo_output);
     if(!buscar_funciones(archivo, archivo_output))
     	return 0;
+    print_strchar(archivo_output);
     fprintf(archivo_output, "\nint main()\n{\n");
 
     return 1;
@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
             linea++;
             continue;
         }
-        else if(strcmp(cadena, "\n") == 0 || (cadena[0] == '\t' && len == 1))
+        else if((strcmp(cadena, "\n") == 0) || (cadena[0] == '\t' && len == 2))
         {
             fprintf(archivo_output, "\n");
             memset(cadena, 0, sizeof(cadena));
