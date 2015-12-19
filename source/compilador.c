@@ -250,7 +250,7 @@ void libera_stack(balanced ** stack)
         temp = *stack;
         *stack = temp->next;
         free(temp);
-    }
+	}
 }
 
 uint8_t check_pair(uint8_t value1, uint8_t value2)
@@ -343,7 +343,7 @@ uint8_t check_balanced(uint8_t * cadena, uint8_t token)
         if(stack != NULL)
             libera_stack(&stack);
         return 0;
-    }	
+	}	
 }
 
 uint8_t * remove_quotes(uint8_t * cadena)
@@ -362,7 +362,7 @@ uint8_t * remove_quotes(uint8_t * cadena)
             break;
         else
             temp[indice++] = cadena[i];
-    }
+	}
 
     uint8_t * char_retorna = (uint8_t *)malloc(strlen(temp)+1);
     strcpy(char_retorna, temp);
@@ -373,12 +373,13 @@ uint8_t * remove_quotes(uint8_t * cadena)
 uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
 {
     *lexer = (*lexer)->next; //omitimos el token 0 (que es el root)
-    data * datos;
+    data * datos = NULL;
     uint8_t * cadena_retorno = NULL;
 	
     switch((*lexer)->token)
     {
         case VARIABLE:
+        { 
             datos = check_variable_grammar(*lexer, size);
             if(datos == NULL)
                 return NULL;
@@ -424,6 +425,7 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
             }
             free(datos);
             break;
+        }    
         case PRINT:
             datos = check_print_grammar(*lexer, size);
             if(datos == NULL)
@@ -440,24 +442,40 @@ uint8_t * semantic_analyzer(lexical ** lexer, int len, uint8_t size)
             if(!check_if_grammar(*lexer, size))
                 return NULL;
             cadena_retorno = print_original_if(*lexer, size);
+            if(cadena_retorno == NULL)
+                return NULL;
             break;
         case ELSE:
             cadena_retorno = print_original_else(*lexer, size);
             if(cadena_retorno == NULL)
                 return NULL;
-            break;     
-         case ELIF:
+            break;
+        case ELIF:
             if(!check_if_grammar(*lexer, size))
                 return NULL;
             cadena_retorno = print_original_if(*lexer, size);
+            if(cadena_retorno == NULL)
+                return NULL;
             break;
         case WHILE:
              if(!check_if_grammar(*lexer, size))
                 return NULL;
             cadena_retorno = print_original_if(*lexer, size);
-            break;    
+            if(cadena_retorno == NULL)
+                return NULL;
+            break;
+        case FOR:
+        { 
+            uint8_t ret = check_for_grammar(*lexer, size);
+            if(ret == 0)
+                return NULL;
+            cadena_retorno = print_original_for(*lexer, size, ret);
+            if(cadena_retorno == NULL)
+                return NULL;
+            break;
+        }
         default:
-            debug("\nError en linea %d: se desconoce le tipo: %s\n", linea,(*lexer)->valor);
+            debug("\nError en linea %d: se desconoce el tipo: %s\n", linea,(*lexer)->valor);
             return NULL;
     }
 
@@ -550,7 +568,7 @@ uint8_t check_keyword(uint8_t * token)
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
 	}
-	else if(strcmp(token, "typedef") == 0 || strcmp(token, "continue") == 0)
+	else if(strcmp(token, "typedef") == 0 || strcmp(token, "break") == 0 || strcmp(token, "continue") == 0)
 	{
 		debug("\nError en linea %d: el nombre \"%s\" es un keyword reservado\n", linea, token);
 		retorno = 0;
@@ -687,20 +705,26 @@ uint8_t get_token_funcion_o_var(uint8_t * token, lexical ** lexer, uint8_t i)
         r_token = FLOAT_F;
     else if(strcmp(temp, "len") == 0)
         r_token = LEN;
-    else if(strcmp(temp, "if") == 0)
+    else if(strcmp(temp, "if") == 0) 
         r_token = IF;
-    else if(strcmp(temp, "else") == 0)
+    else if(strcmp(temp, "else") == 0) 
         r_token = ELSE;
-    else if(strcmp(temp, "and") == 0)
+    else if(strcmp(temp, "and") == 0) 
         r_token = AND;
-    else if(strcmp(temp, "or") == 0)
+    else if(strcmp(temp, "or") == 0) 
         r_token = OR;
-    else if(strcmp(temp, "not") == 0)
-        r_token = NOT;    
+    else if(strcmp(temp, "not") == 0) 
+        r_token = NOT;
     else if(strcmp(temp, "elif") == 0) 
         r_token = ELIF;
     else if(strcmp(temp, "while") == 0) 
-        r_token = WHILE;    
+        r_token = WHILE;
+    else if(strcmp(temp, "for") == 0) //NUEVO 
+        r_token = FOR;
+    else if(strcmp(temp, "in") == 0) //NUEVO
+        r_token = IN;
+    else if(strcmp(temp, "range") == 0)
+        r_token = RANGE;
     else
         r_token = VARIABLE;
 
@@ -723,9 +747,9 @@ uint8_t check_indentacion(uint16_t espacios)
     return 0;
 }
 
-int len_sin_espacios(uint8_t * cadena)
+uint32_t len_sin_espacios(uint8_t * cadena)
 {
-    uint8_t i = 0;
+    uint32_t i = 0;
 
     while(*cadena)
     {
@@ -765,9 +789,9 @@ output_code * parser(uint8_t * cadena)
     int len = strlen(cadena);
     uint8_t temp[10];
     uint8_t operador = 0;
+    uint8_t size = 0;
     uint16_t espacios = 0;
     uint8_t chars = 0;
-    uint8_t size = 0;
 
     memset(temp, 0, sizeof(temp));
 
@@ -788,13 +812,13 @@ output_code * parser(uint8_t * cadena)
             if(chars == 0)
                 espacios++;
         }
-        else if(cadena[i] == '\t')
+        else if(cadena[i] == '\t') 
         {
             if(chars == 0)
                 espacios += 4;
         }
-        else
-        {
+		else
+		{
             if(chars == 0 && espacios > 0)
             {
                 if(!check_indentacion(espacios))
@@ -804,7 +828,7 @@ output_code * parser(uint8_t * cadena)
                     liberacion_general();
                     return NULL;
                 }
-            }	
+            }
             if(isalpha(cadena[i]))
                 i = get_token_funcion_o_var(cadena, &lexer, i);
             else if(isdigit(cadena[i]))
@@ -812,25 +836,13 @@ output_code * parser(uint8_t * cadena)
             else if(es_operador(cadena[i]))
 	        {
                 temp[0] = cadena[i];
-                if(cadena[i] == '=')
+                uint8_t temp_token = (cadena[i] == '=') ? IGUAL : OPERADOR;
+                if(!agregar_token(&lexer, temp, temp_token))
                 {
-                    if(!agregar_token(&lexer, temp, IGUAL))
-                    {
-                        acomodar_nodos(&lexer, &root);
-                        libera_tokens(&lexer, size);
-                        liberacion_general();
-                        return NULL;
-                    }
-                }
-                else
-                {	
-                    if(!agregar_token(&lexer, temp, OPERADOR))
-                    {
-                        acomodar_nodos(&lexer, &root);
-                        libera_tokens(&lexer, size);
-                        liberacion_general();
-                        return NULL;
-                    }
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
                 }
                 operador++;
                 memset(temp, 0, sizeof(temp));
@@ -838,25 +850,13 @@ output_code * parser(uint8_t * cadena)
             else if(es_parentesis(cadena[i]))
             {
                 temp[0] = cadena[i];
-                if(cadena[i] == '(')
+                uint8_t t_token = (cadena[i] == '(') ? L_PARENTESIS : R_PARENTESIS;
+                if(!agregar_token(&lexer, temp, t_token))
                 {
-                    if(!agregar_token(&lexer, temp, L_PARENTESIS))
-                    {
-                        acomodar_nodos(&lexer, &root);
-                        libera_tokens(&lexer, size);
-                        liberacion_general();
-                        return NULL;
-                    }
-                }
-                else
-                {	
-                    if(!agregar_token(&lexer, temp, R_PARENTESIS))
-                    {
-                        acomodar_nodos(&lexer, &root);
-                        libera_tokens(&lexer, size);
-                        liberacion_general();
-                        return NULL;
-                    }
+                    acomodar_nodos(&lexer, &root);
+                    libera_tokens(&lexer, size);
+                    liberacion_general();
+                    return NULL;
                 }
                 operador++;
                 memset(temp, 0, sizeof(temp));
@@ -871,6 +871,7 @@ output_code * parser(uint8_t * cadena)
                     liberacion_general();
                     return NULL;
                 }
+                memset(temp, 0, sizeof(temp));
             }
             else if(es_angle_bracket(cadena[i]))
             {
@@ -956,17 +957,15 @@ output_code * parser(uint8_t * cadena)
     uint8_t * cadena_retorno = semantic_analyzer(&lexer, len, size);
     if(cadena_retorno == NULL)
     {
-        libera_tokens(&lexer, size);
+	libera_tokens(&lexer, size);
 	liberacion_general();
 	return 0;
     }
-	
+    
     output_code * codigo = get_output(cadena_retorno, espacios);
 
-    if(lexer->token == IF || lexer->token == ELSE || lexer->token == ELIF || lexer->token == WHILE)
-    {
+    if(lexer->token == IF || lexer->token == ELSE || lexer->token == ELIF || lexer->token == WHILE || lexer->token == FOR) 
         indentacion++;
-    }
 	
     libera_tokens(&lexer, size);
     free(cadena_retorno);
