@@ -294,7 +294,7 @@ uint8_t * print_original_for(lexical * lexer, uint8_t size, uint8_t token_type)
             break;
         }
         default:
-            debug("\nError en linea %d: valor DESCONOCIDO wey\n");
+            debug("\nError en linea %d: valor DESCONOCIDO\n");
             break;
     }
 
