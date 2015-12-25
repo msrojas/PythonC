@@ -1,8 +1,8 @@
 # PythonC
 Traducir codigo Python a codigo C/Translate Python code to C code
 <br>
-<h3>Actualizado: 19-diciembre-2015</h3>
-PythonC es una herramienta que permite traducir código Python a código C. Ahora cuenta con funciones: función print, definición de variables, concatenaciones, operaciones numéricas, raw_input, int(), float(), len(), <strong>if</strong>, <strong>else</strong>, operadores logicos, elif, while, imprimir indices de cadenas, free, listas y bucle for. Pero no hay de que preocuparse, iremos actualizando el código lo más pronto posible.
+<h3>Actualizado: 25-diciembre-2015</h3>
+PythonC es una herramienta que permite traducir código Python a código C. Ahora cuenta con funciones: función print, definición de variables, concatenaciones, operaciones numéricas, raw_input, int(), float(), len(), <strong>if</strong>, <strong>else</strong>, operadores logicos, elif, while, imprimir indices de cadenas, free, listas, bucle for, concatenar  y asignar valores de listas. Pero no hay de que preocuparse, iremos actualizando el código lo más pronto posible.
 <br>
 Los if anidados no fueron probados al 100. Por lo tanto si encuentras un error, favor de avisar a cualquiera de las direcciones que se encuentran abajo.<br>
 <strong>Ahora ya es posible usar raw_input para capturar cadenas dentro de un while sin problemas. Pero para ello tendrás que ver la documentación</strong><br>
