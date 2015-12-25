@@ -554,6 +554,22 @@ uint16_t get_funciones_extras(lexical * lexer, uint8_t size)
             len += 3;
         else if(lexer->token == INT || lexer->token == FLOAT_F)
             len += 1;
+        else if(lexer->token == VARIABLE)
+        {
+            uint8_t token = ht_get(lexer->valor);
+            if(token == LIST)
+            {
+                uint8_t validar = is_corchetes(lexer);
+                if(validar == 0)
+                {
+                    uint8_t * indice = get_list_indice(lexer);
+                    if(indice == NULL)
+                        return 0;
+                    len += strlen("get_indice_en_especifico_ttype(->,)")+strlen(indice)+strlen(lexer->valor);
+                    free(indice);
+                }
+            }
+        }
         lexer = lexer->next;      
     }
     return len;
@@ -859,6 +875,8 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             else
                 len_type = strlen(";")+1;
             uint16_t len_funciones = get_funciones_extras(lexer,size);
+            if(!buscar_lista_elemento(lexer,size))
+                return NULL;
             uint8_t temp[len_cadena+len_type+len_funciones+1];
             memset(temp, 0, sizeof(temp));
 
@@ -875,16 +893,31 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             size -= 1;
 
             lexer = lexer->next;
+            uint8_t temp_token = 0;
+            uint8_t last_token = 0;
             for(i=0;i<size;i++)
             {
+                if(last_token == R_CORCHETES && temp_token != 0)
+                    temp_token = 0;
                 if(lexer->token == INT)
                     strcat(temp, "atoi");
                 else if(lexer->token == LEN)
                     strcat(temp, "strlen");
                 else if(lexer->token == FLOAT_F	)
                     strcat(temp, "atof");
+                else if(lexer->token == GET_INDICE_INT)
+                {
+                    strcat(temp, "get_indice_en_especifico_int(");
+                    if(!concatena_resultado(lexer, temp))
+                        return NULL;
+                    temp_token = GET_INDICE_INT;    	
+                }
                 else
-                    strcat(temp, lexer->valor);
+                {
+                	if(temp_token == 0)
+                        strcat(temp, lexer->valor);
+                }
+                last_token = lexer->token;
                 lexer = lexer->next;
             }
 
@@ -945,6 +978,8 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
                 len_type = strlen(";")+1;
 
             uint16_t len_funciones = get_funciones_extras(lexer,size);
+            if(!buscar_lista_elemento(lexer,size))
+                return NULL;
             uint8_t temp[len_cadena+len_type+len_funciones+1];
             memset(temp, 0, sizeof(temp));
 
@@ -955,16 +990,38 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 
             size -= 1;
             lexer = lexer->next;
+            uint8_t temp_token = 0;
+            uint8_t last_token = 0;
             for(i=0;i<size;i++)
             {
+                if(last_token == R_CORCHETES && temp_token != 0)
+                    temp_token = 0;
                 if(lexer->token == INT)
                     strcat(temp, "atoi");
                 else if(lexer->token == LEN)
                     strcat(temp, "strlen");
                 else if(lexer->token == FLOAT_F	)
                     strcat(temp, "atof");
+                else if(lexer->token == GET_INDICE_INT)
+                {
+                    strcat(temp, "get_indice_en_especifico_int(");
+                    if(!concatena_resultado(lexer, temp))
+                        return NULL;
+                    temp_token = GET_INDICE_INT;    	
+                }
+                else if(lexer->token == GET_INDICE_FLOAT)
+                {
+                    strcat(temp, "get_indice_en_especifico_float(");
+                    if(!concatena_resultado(lexer, temp))
+                        return NULL;
+                    temp_token = GET_INDICE_FLOAT;    	
+                }
                 else
-                    strcat(temp, lexer->valor);
+                {
+                	if(temp_token == 0)
+                        strcat(temp, lexer->valor);
+                }
+                last_token = lexer->token;
                 lexer = lexer->next;
             }
 
@@ -999,6 +1056,7 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
         }
         case LIST:
         {
+        	//printf("list\n");
             uint8_t token_comentario = var_get(lexer->valor);
             uint8_t token_var = ht_get(lexer->valor);
             if(token_comentario != 0)
@@ -1040,6 +1098,8 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
             size -= 3;
             uint8_t * string = NULL;
             uint8_t last_token = 0;
+            lista_tokens * token_lista = NULL;
+            token_lista = init_token_lista();
 
             for(i=0;i<size;i++)
             {
@@ -1053,6 +1113,8 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
                         strcat(temp, string);
                         free(string);
                         string = NULL;
+                        if(!InsertTokenList(token_lista, lexer->token))
+                            return NULL;
                     }
                 }
                 last_token = lexer->token;
@@ -1081,11 +1143,16 @@ uint8_t * print_origanl_variable(data * datos, lexical * lexer, int len_cadena, 
 					return NULL;
                 }
             }
+            if(!agregar_list_token(temp_cadena, token_lista->next))
+            	return NULL;
+
+            delete_list(token_lista->next);
+            free(token_lista);
 
             break;
         }    	
         default:
-            printf("DESCONOCIDO\n");
+            printf("DESCONOCIDO...\n");
             break;	
     }
 
@@ -1159,7 +1226,7 @@ data * check_variable_grammar(lexical * lexer, uint8_t size)
     	
     }
 
-    data * datos = basic_grammar(lexer, size);
+    data * datos = basic_grammar(lexer, size, VARIABLE);
 
     if(datos == NULL)
         return NULL;
