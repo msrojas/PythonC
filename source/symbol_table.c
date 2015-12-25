@@ -10,6 +10,201 @@
 
 #include "symbol_table.h"
 
+void delete_list(lista_tokens * current)
+{
+    if(current == NULL)
+        return;
+
+    lista_tokens * temp = NULL;
+    while(current != NULL)
+    {
+        temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
+
+uint8_t asignar_nuevo_token(lexical * lexer, uint8_t data_type)
+{
+    if(lexer == NULL)
+    {
+        debug("\nError: bug en asignar_nuevo_token\n");
+        return 0;
+    }
+    switch(data_type)
+    {
+        case NUMERO:
+            lexer->token = GET_INDICE_INT;
+            break;
+        case FLOAT:
+            lexer->token = GET_INDICE_FLOAT;
+            break;
+        case CADENA:
+            lexer->token = GET_INDICE_CHAR;
+            break;
+        default:
+            debug("\nErrno: VALOR DESCONOCIDO (posible bug): %s\n", lexer->valor);
+            return 0;
+            break;        
+    }
+
+    return 1;
+}
+
+uint8_t buscar_lista_elemento(lexical * lexer, uint8_t size)
+{
+    uint8_t i=0;
+    uint8_t token = 0;
+    uint8_t validar = 0; 
+    uint8_t * indice = NULL;
+    uint8_t data_type = 0;
+    for(i=0;i<size;i++)
+    {
+        if(lexer->token == VARIABLE)
+        {
+            token = ht_get(lexer->valor);
+            if(token == LIST)
+            {
+                validar = is_corchetes(lexer);
+                if(validar == 0)
+                {
+                    indice = get_list_indice(lexer);
+                    if(indice == NULL)
+                        return 0;
+                    data_type = get_data_type(lexer->valor, indice);
+                    if(data_type == 0)
+                        return 0;
+                    if(!asignar_nuevo_token(lexer,data_type))
+                        return 0;
+                    free(indice);
+                }
+            }
+        }
+
+        lexer = lexer->next;
+    }
+
+    return 1;
+}
+
+uint8_t get_type(lista_tokens * current, uint8_t indice)
+{
+    uint16_t i = 0;
+    while(current != NULL)
+    {
+        if(i == indice)
+            break;
+        current = current->next;
+        i++;
+    }
+
+    if(current == NULL)
+    {
+        debug("\nError en linea %d: indice fuera de rango: ", linea);
+        return 0;
+    }
+    return current->token;
+}
+
+uint8_t get_data_type(uint8_t * key, uint8_t * indice)
+{
+    unsigned int h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0)
+        {
+            uint16_t index = atoi(indice);
+            uint8_t type = get_type(e->tokens->next, index);
+            if(type == 0)
+            {
+                debug("%s\n", e->var_name);
+                return 0;
+            }
+            return type;
+        }
+
+        e = e->next;
+    }
+
+    debug("\nError: bug en funcion: get_data_type\n");
+    return 0;
+}    
+
+lista_tokens * get_node(uint8_t token)
+{
+    lista_tokens * temp = malloc(sizeof(lista_tokens));
+    if(temp == NULL)
+    {
+        printf("Errno: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+    temp->token = token;
+    temp->next = NULL;
+    return temp;
+}    
+
+uint8_t InsertTokenList(lista_tokens * token_list, uint8_t token)
+{   
+    lista_tokens * temp = token_list;
+    lista_tokens * newNode = get_node(token);
+    if(newNode == NULL)
+        return 0;
+    while(temp->next != NULL)
+        temp = temp->next;
+
+    temp->next = newNode;
+    return 1;
+}
+
+
+lista_tokens * init_token_lista()
+{
+    lista_tokens * temp = malloc(sizeof(lista_tokens));
+    if(temp == NULL)
+    {
+        printf("Error: ocurrio un inconveniente en la heap\n");
+        return NULL;
+    }
+
+    temp->next = NULL;
+    return temp;
+}
+
+uint8_t agregar_list_token(uint8_t * key , lista_tokens * token_list)
+{
+    unsigned int h = ht_calc_hash(key) % hash->size;
+    hash_elem_t * e = hash->table[h];
+
+    while(e != NULL)
+    {
+        if(strcmp(e->var_name, key) == 0)
+        {
+            if(e->tokens == NULL)
+            {
+                e->tokens = init_token_lista();
+                if(e->tokens == NULL)
+                    return 0;
+            }
+
+            while(token_list != NULL)
+            {
+                InsertTokenList(e->tokens, token_list->token);
+                token_list = token_list->next;
+            }
+
+            return 1;
+        }
+
+        e = e->next;
+    }
+
+
+    printf("Error: bug en funcion: agregar_list_token\n");
+    return 0;
+}    
+
 void print_token(uint8_t token)
 {
 	switch(token)
@@ -98,6 +293,7 @@ uint8_t ht_put(uint8_t * key, uint8_t token, uint8_t token_function,uint8_t * va
 	}
 	else
 	    e->value = NULL;
+    e->tokens = NULL;
 
 	e->next = hash->table[h];
 	hash->table[h] = e;
@@ -123,6 +319,11 @@ void * ht_remove(uint8_t * key)
 				hash->table[h] = e->next;
 			if(e->value != NULL)
 			    free(e->value);
+            if(e->token == LIST)
+            {
+                delete_list(e->tokens->next);
+                free(e->tokens);
+            }
 			free(e);
 			e = NULL;
 			return data;
