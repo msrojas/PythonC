@@ -221,4 +221,6 @@ void free_vars_compile(FILE * archivo)
 		}
 		e = free_iterate(&it);
 	}
+	if(list_existe)
+	    fprintf(archivo, "%*s\n", strlen("liberacion_extra();")+4, "liberacion_extra();");
 }
