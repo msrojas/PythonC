@@ -6,7 +6,7 @@ PythonC es una herramienta que permite traducir código Python a código C. Ahor
 <br>
 Los if anidados no fueron probados al 100. Por lo tanto si encuentras un error, favor de avisar a cualquiera de las direcciones que se encuentran abajo.<br>
 <strong>Ahora ya es posible usar raw_input para capturar cadenas dentro de un while sin problemas. Pero para ello tendrás que ver la documentación</strong><br>
-<strong>Las listas aun estan en progreso. Por el momento, solo se permite declararlas e imprimirlas. El bucle for solo acepta la sintaxis basica: iterar cadenas, listas y la función range.</strong>
+<strong>Las listas aun estan en progreso. Por el momento, solo se permite declararlas, imprimirlas y concatenar solo valores numericos. El bucle for solo acepta la sintaxis basica: iterar cadenas, listas y la función range.</strong>
 <br><br>
 Para traducir código eficientemente tendrás que darle un vistazo a la documentación: <a href="https://pythoncblog.wordpress.com/documentacion/">link</a><br>
 O bien, ve la carpeta "ejemplos"
