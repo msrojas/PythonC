@@ -20,7 +20,7 @@
 */    
 #include "sintaxis_basica.h"
 
-data * basic_grammar(lexical * lexer, uint8_t size)
+data * basic_grammar(lexical * lexer, uint8_t size, uint8_t token_root)
 {
     data * datos = (data *)malloc(sizeof(data));
     if(datos == NULL)
@@ -77,8 +77,32 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                 return NULL;
             }
             datos->declarada = 1;
-            if(ret_token != LIST)
+            if(ret_token != LIST && token != LIST && (token_root == PRINT || token_root == VARIABLE))  //NUEVO
+            {
                 ret_token = token;
+            }
+            else if(token_root == VARIABLE && token == LIST) //nuevo
+            {
+                uint8_t validar = is_corchetes(lexer);
+                if(validar == 0)
+                {
+                    uint8_t * indice = get_list_indice(lexer);
+                    if(indice == NULL)
+                        return NULL;
+                    uint8_t data_type = get_data_type(lexer->valor, indice);
+                    if(data_type == 0)
+                        return NULL;
+                    free(indice);
+                    ret_token = data_type;
+                }
+                else
+                {
+                    debug("\nError en linea %d: solo permiten asignar indices de listas\n", linea);
+                    return NULL;
+                }
+            }
+            else if(token_root == PRINT && token == LIST) //NUEVO
+                ret_token = LIST;
         }
         else if(lexer->token == VARIABLE && i == cuenta_lparentesis && ret_token == L_PARENTESIS)
         {
@@ -273,12 +297,35 @@ data * basic_grammar(lexical * lexer, uint8_t size)
                     free(datos);
                     return NULL;
                 }
+                else if(token == LIST && token_root == VARIABLE) //NUEVO
+                {
+                    uint8_t validar = is_corchetes(lexer);
+                    if(validar == 0)
+                    {
+                        uint8_t * indice = get_list_indice(lexer);
+                        if(indice == NULL)
+                            return NULL;
+                        uint8_t data_type = get_data_type(lexer->valor, indice);
+                        if(data_type == 0)
+                            return NULL;
+                        free(indice);
+                        if(((ret_token == NUMERO || ret_token == FLOAT) && data_type == CADENA) || (ret_token == CADENA && (ret_token == NUMERO || ret_token == FLOAT)))
+                        {
+                            debug("\nError en linea %d: la variable \"%s\" es otro tipo de dato\n", linea,lexer->valor);
+                            return NULL;
+                        }
+                        if(data_type == FLOAT)
+                            ret_token = data_type;
+                    }
+                }
                 else if(operacion == 1 && token == FLOAT)
                 {
                     ret_token = FLOAT;
                 }
                 if(last_token == L_PARENTESIS && (temp_token == INT || temp_token == FLOAT_F || temp_token == LEN))
                     temp_token = 0;
+                if(token == LIST && token_root == PRINT) //nuevo
+                    ret_token = LIST;    
             }
         }
         else if(lexer->token == OPERADOR && last_token != 0)
