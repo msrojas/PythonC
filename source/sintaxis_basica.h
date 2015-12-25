@@ -23,6 +23,6 @@
 
 #include "compilador.h"
 
-data * basic_grammar(lexical * lexer, uint8_t size);
+data * basic_grammar(lexical * lexer, uint8_t size, uint8_t token_root);
 
 #endif
