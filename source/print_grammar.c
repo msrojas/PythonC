@@ -20,6 +20,19 @@
 */    
 #include "print_grammar.h"
 
+uint8_t concatena_resultado(lexical * lexer, uint8_t * check_temp_balanced)
+{
+    strcat(check_temp_balanced, lexer->valor);
+    strcat(check_temp_balanced, "->next,");
+    uint8_t * indice = get_list_indice(lexer);
+    if(indice == NULL)
+        return 0;
+    strcat(check_temp_balanced, indice);
+    strcat(check_temp_balanced, ")");
+    free(indice);
+    return 1;
+}    
+
 uint8_t is_corchetes(lexical * lexer)
 {
     lexer = lexer->next;
@@ -29,7 +42,7 @@ uint8_t is_corchetes(lexical * lexer)
         return 1;
 }    
 
-uint8_t * get_list_indice(lexical * lexer, uint8_t size)
+uint8_t * get_list_indice(lexical * lexer)
 {
     lexer = lexer->next;
     lexer = lexer->next;
@@ -242,6 +255,46 @@ uint8_t check_sub_indices(lexical * lexer, uint8_t size) //NUEVO
     return 1;
 }
 
+void concatenar(uint8_t * temp, uint8_t type, uint8_t index)
+{
+	if(index == 0)
+	{ 
+        switch(type)
+        {
+            case NUMERO:
+                strcat(temp, "printf(\"%d");
+                break;
+            case FLOAT:
+                strcat(temp, "printf(\"%f");
+                break;
+            case CADENA:
+                strcat(temp, "printf(\"%s");
+                break;
+            default:
+                debug("\nVALOR DESCONOCIDO...\n");
+                break;            
+        }
+    }
+    else
+    {
+    	switch(type)
+        {
+            case NUMERO:
+                strcat(temp, "%d");
+                break;
+            case FLOAT:
+                strcat(temp, "%f");
+                break;
+            case CADENA:
+                strcat(temp, "%s");
+                break;
+            default:
+                debug("\nVALOR DESCONOCIDO...\n");
+                break;            
+        }
+    }
+}
+
 uint8_t StrCat(lexical * lexer, uint8_t * temp)
 {
     uint8_t token = 0;
@@ -268,9 +321,25 @@ uint8_t StrCat(lexical * lexer, uint8_t * temp)
             strcat(temp, "%s");
         else if(token == CADENA && token_for == FOR)
             strcat(temp, "%c");
-        else if(token == FLOAT)
-            strcat(temp, "%f");
+        else if(token == LIST)
+        {
+            uint8_t validar = is_corchetes(lexer);
+            if(validar == 0)
+            {
+                uint8_t * indice = get_list_indice(lexer);
+                if(indice == NULL)
+               	    return 0;
+                uint8_t data_type = get_data_type(lexer->valor, indice);
+                if(data_type == 0)
+                    return 0;
+                concatenar(temp, data_type, 1);
+                free(indice);
+                if(!asignar_nuevo_token(lexer,data_type))
+                    return 0;
+            }
+        }
     }
+    return 1;
 }
 
 uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
@@ -292,10 +361,12 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
             {
                 if(lexer->token != L_PARENTESIS && lexer->token != R_PARENTESIS)
                     strcat(temp, " ");
-                StrCat(lexer, temp);
+                if(!StrCat(lexer, temp))
+                    return NULL;
             }
             else if(last_token == PLUS_CONCAT)
-                StrCat(lexer, temp);
+                if(!StrCat(lexer, temp))
+                    return NULL;
         }
         else if(i == 0 || parentesis == 1)
         {
@@ -319,6 +390,23 @@ uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador)
                     strcat(temp, "printf(\"%c");    	
                 else if(token == FLOAT)
                     strcat(temp, "printf(\"%f");
+                else if(token == LIST)
+                {
+                    uint8_t validar = is_corchetes(lexer);
+                    if(validar == 0)
+                    {
+                        uint8_t * indice = get_list_indice(lexer);
+                        if(indice == NULL)
+                            return NULL;
+                        uint8_t data_type = get_data_type(lexer->valor, indice);
+                        if(data_type == 0)
+                            return NULL;
+                        concatenar(temp, data_type, 0);
+                        free(indice);
+                        if(!asignar_nuevo_token(lexer,data_type))
+                            return NULL;
+                    }
+                }    	
                 token = 0;		
             }
             else if(lexer->token == L_PARENTESIS)
@@ -438,7 +526,36 @@ uint16_t get_len_numbers(lexical * lexer, uint8_t size)
             len += 3;
         else if(lexer->token == INT || lexer->token == FLOAT_F) //NUEVO
             len += 1;
-        len += strlen(lexer->valor); 
+        else if(lexer->token == VARIABLE)
+        {
+            uint8_t token = ht_get(lexer->valor);
+            if(token == LIST)
+            {
+                uint8_t validar = is_corchetes(lexer);
+                if(validar == 0)
+                {
+                    uint8_t * indice = get_list_indice(lexer);
+                    if(indice == NULL)
+                        return 0;
+                    len += strlen("get_indice_en_especifico_ttype(->next,)")+strlen(lexer->valor)+strlen(indice);
+                    free(indice);
+                }
+                else
+                {
+                	uint8_t token_for = get_token_function(lexer->valor);
+                	if(token_for == 0)
+                	{
+                		debug("\nError en linea %d: solo puedes concatenar listas que fueron declaradas en un for o indices de listas\n", linea);
+                		return 0;
+                	}
+                	len += strlen("get_indice_ttype()")+strlen(lexer->valor);
+                }
+            }
+            else
+                len += strlen(lexer->valor);
+        }
+        else
+            len += strlen(lexer->valor); 
         lexer = lexer->next;
     }
 
@@ -453,6 +570,7 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
     uint8_t c_concat = 0;
     uint8_t i = 0;
     size -= 1;
+    //printf("assdd\n");
 
     switch(datos->token)
     {
@@ -666,46 +784,123 @@ uint8_t * print_original_value(lexical * lexer, uint8_t size, data * datos)
         }
         case LIST:
         {
-           /* uint16_t len = get_len_numbers(lexer, size);
+            uint16_t len = 0;
             c_concat = check_concatenacion(lexer, size);
             uint8_t ret = check_sub_indices(lexer, size);
+            uint8_t * indice = NULL;
+            uint8_t valida = 0;
+            uint8_t val = 0;
+            uint8_t token_for = 0;
             if(ret == 0)
                 return NULL;
             uint16_t formato_len = 0;
             if(c_concat > 0)
             {
+            	len = get_len_numbers(lexer, size);
                 check_float(size, lexer);
-                string = get_formato(size,lexer, c_concat);	
+                string = get_formato(size,lexer, c_concat);
+                if(string == NULL)
+                    return NULL;	
                 formato_len = strlen(string)+3;
+                val++;
             }
             else
-                formato_len = strlen("print_indice_en_especifico()")+1;*/
-            
-            
-            if(!is_only_list(lexer, size))
-                return NULL;
-            uint8_t valida = is_corchetes(lexer);
-            uint16_t len = 0;
-            uint8_t * indice = NULL;     
-            if(valida == 0)
-            {            
-                indice = get_list_indice(lexer, size);
-                len = strlen("print_indice_en_especifico(->next,);")+strlen(lexer->valor)+strlen(indice);
-                uint8_t temp[len+1];
-                memset(temp, 0, sizeof(temp));
-        	}
-        	else
-        	{
-        	    len = strlen("print_indice();")+strlen(lexer->valor);
-        	}
+            {
+            	valida = is_corchetes(lexer);
+                indice = NULL;     
+                if(valida == 0)
+                {            
+                    indice = get_list_indice(lexer);
+                    if(indice == NULL)
+                        return NULL;
+                    len = strlen("print_indice_en_especifico(->next,);")+strlen(lexer->valor)+strlen(indice);
+                }
+                else
+                {
+                	token_for = get_token_function(lexer->valor);
+                	if(token_for == FOR)
+                        len = strlen("print_indice();")+strlen(lexer->valor);
+                    else
+                    	len = strlen("Print(->next);")+strlen(lexer->valor);
+                }
+            }
 
-        	uint8_t temp[len+1];
-        	memset(temp, 0, sizeof(temp));
+            uint8_t temp[len+formato_len];
+            memset(temp, 0, sizeof(temp));
 
-        	if(valida == 0)
-        	    sprintf(temp, "print_indice_en_especifico(%s->next,%s);",lexer->valor, indice);
-        	else
-        	    sprintf(temp, "print_indice(%s);", lexer->valor);
+            if(val == 0 && valida == 0 && c_concat == 0)
+                sprintf(temp, "print_indice_en_especifico(%s->next,%s);",lexer->valor, indice);
+            else if(val == 0 && valida == 1 && c_concat == 0)
+            {
+                if(token_for == FOR)
+                    sprintf(temp, "print_indice(%s);", lexer->valor);
+                else
+                    sprintf(temp, "Print(%s->next);", lexer->valor);	
+            }
+            else if(val == 1)
+            {
+            	uint8_t temp_token = 0;
+            	uint8_t last_token = 0;
+            	strcat(temp, string);
+            	uint8_t check_temp_balanced[len+1];
+            	memset(check_temp_balanced, 0, sizeof(check_temp_balanced));
+                for(i=0;i<size;i++)
+                {
+                	if(last_token == R_CORCHETES && temp_token != 0)
+                        temp_token = 0;
+                    if(lexer->token == PLUS_CONCAT && c_concat > 0)
+                        strcat(check_temp_balanced, ",");
+                    else if(lexer->token == INT && temp_token == 0)
+                        strcat(check_temp_balanced, "atoi");
+                    else if(lexer->token == LEN && temp_token == 0)
+                        strcat(check_temp_balanced, "strlen");
+                    else if(lexer->token == FLOAT_F	&& temp_token == 0)
+                        strcat(check_temp_balanced, "atof");
+                    else if(lexer->token == GET_INDICE_INT)
+                    {
+                        strcat(check_temp_balanced, "get_indice_en_especifico_int(");
+                        if(!concatena_resultado(lexer, check_temp_balanced))
+                            return NULL;
+                        temp_token = GET_INDICE_INT;         
+                    }
+                    else if(lexer->token == GET_INDICE_FLOAT)
+                    {
+                        strcat(check_temp_balanced, "get_indice_en_especifico_float(");
+                        if(!concatena_resultado(lexer, check_temp_balanced))
+                            return NULL;
+                        temp_token = GET_INDICE_FLOAT;    	
+                    }
+                    else if(lexer->token == GET_INDICE_CHAR)
+                    {
+                        strcat(check_temp_balanced, "get_indice_en_especifico_char(");
+                        if(!concatena_resultado(lexer, check_temp_balanced))
+                            return NULL;
+                        temp_token = GET_INDICE_CHAR;    		
+                    }
+                    else
+                    {
+                        if(lexer->token == CADENA && c_concat > 0)
+                            checa_y_modifica(lexer->valor);
+                        if(temp_token == 0)
+                            strcat(check_temp_balanced, lexer->valor);
+                    }
+                    last_token = lexer->token;
+                    lexer = lexer->next;
+                }
+                if(datos->operacion_secundaria == OPE_DE_PARENTESIS)
+                {
+                    if(!check_balanced(check_temp_balanced, PRINT))
+                    {
+                        debug("\nError en linea %d: los parentesis no estan balanceados\n", linea);
+                        return NULL;
+                    }
+                }
+
+                strcat(temp, check_temp_balanced);
+                strcat(temp, ");");
+                free(string);
+            }
+            //printf("entre\n");
 
             cadena_retorno = malloc(strlen(temp)+1);
             if(cadena_retorno == NULL)
@@ -739,7 +934,7 @@ data * check_print_grammar(lexical * lexer, uint8_t size)
     }
 
     lexer = lexer->next;
-    data * datos = basic_grammar(lexer, size);
+    data * datos = basic_grammar(lexer, size, PRINT);
 
     if(datos == NULL)
         return NULL;
