@@ -17,7 +17,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Email: alez011@hotmail.com
-*/ 
+*/  
 #ifndef VARIABLE_GRAMMAR_H
 #define VARIABLE_GRAMMAR_H
 
