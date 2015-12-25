@@ -23,12 +23,14 @@
 
 #include "compilador.h"
 
+uint8_t concatena_resultado(lexical * lexer, uint8_t * check_temp_balanced);
 uint8_t is_corchetes(lexical * lexer);
-uint8_t * get_list_indice(lexical * lexer, uint8_t size);
+uint8_t * get_list_indice(lexical * lexer);
 uint8_t is_only_list(lexical * lexer, uint8_t size);
 uint8_t check_variable_for(lexical * lexer, uint8_t size);
 uint8_t buscar_corchetes(lexical * lexer, uint8_t index, uint8_t size);
 uint8_t check_sub_indices(lexical * lexer, uint8_t size);
+void concatenar(uint8_t * temp, uint8_t type, uint8_t index);
 uint8_t StrCat(lexical * lexer, uint8_t * temp);
 uint8_t * get_formato(uint8_t size, lexical * lexer, uint8_t contador);
 uint8_t buscar_float(lexical * lexer, uint8_t index, uint8_t size);
