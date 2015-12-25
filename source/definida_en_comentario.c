@@ -277,6 +277,7 @@ uint8_t verificar_funciones(uint8_t * cadena, FILE * archivo_output)
             if(id == 0 || id == 2)
                 return 0;
             fprintf(archivo_output, "#include \"include/list.h\"\n");
+            list_existe++;
         }
     }
 
