@@ -3,13 +3,20 @@
 
 #include "compilador.h"
 
+typedef struct lista_tokens
+{
+    uint8_t token;
+    struct lista_tokens * next;
+}lista_tokens; 
+
 typedef struct hash_elem_t
 {
 	struct hash_elem_t * next;
 	uint8_t * var_name;
 	uint8_t token;
 	uint8_t token_function;
-	uint8_t * value; //NUEVO
+	uint8_t * value; 
+	struct lista_tokens * tokens; //NUEVO
 }hash_elem_t;
 
 typedef struct hashtable_t
@@ -29,6 +36,15 @@ extern hashtable_t * hash;
 
 #define HT_ITERATOR(ht) {ht, 0, ht->table[0]}
 
+void delete_list(lista_tokens * current);
+uint8_t asignar_nuevo_token(lexical * lexer, uint8_t data_type);
+uint8_t buscar_lista_elemento(lexical * lexer, uint8_t size);
+uint8_t get_type(lista_tokens * current, uint8_t indice);
+uint8_t get_data_type(uint8_t * key, uint8_t * indice);
+lista_tokens * get_node(uint8_t token);
+uint8_t InsertTokenList(lista_tokens * token_list, uint8_t token);
+lista_tokens * init_token_lista();
+uint8_t agregar_list_token(uint8_t * key , lista_tokens * token_list);
 void print_token(uint8_t token);
 hashtable_t * ht_create(unsigned int size);
 unsigned int ht_calc_hash(uint8_t * key);
