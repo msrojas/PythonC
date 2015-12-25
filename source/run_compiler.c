@@ -28,6 +28,7 @@ uint32_t linea = 1;
 uint8_t fixed_width = 0;
 var_definidas * definir = NULL;
 uint8_t indentacion = 0;
+uint8_t list_existe = 0;
 
 void error_delete_file(uint8_t * name)
 {
